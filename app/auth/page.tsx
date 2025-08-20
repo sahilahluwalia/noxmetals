@@ -2,9 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '../utils/supabase/client';
 import Header from '../components/Header';
 
 export default function AuthPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -19,15 +25,51 @@ export default function AuthPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Sign in attempted:', formData);
-    // TODO: Implement actual authentication logic
+    setError(null);
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        setError(error.message);
+      } else if (data.user) {
+        // Successfully signed in
+        router.push('/');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`${provider} login attempted`);
-    // TODO: Implement social authentication
+  const handleSocialLogin = async (provider: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider.toLowerCase() as 'google' | 'github' | 'linkedin',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      }
+      // OAuth will redirect the user, so no need to handle navigation here
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,6 +101,13 @@ export default function AuthPage() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Auth Card */}
           <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 shadow-2xl">
             {/* Welcome Header */}
@@ -85,7 +134,8 @@ export default function AuthPage() {
                   onChange={handleInputChange}
                   placeholder="your@company.com"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -105,7 +155,8 @@ export default function AuthPage() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -117,7 +168,8 @@ export default function AuthPage() {
                   name="keepSignedIn"
                   checked={formData.keepSignedIn}
                   onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  disabled={loading}
+                  className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <label htmlFor="keepSignedIn" className="ml-2 text-sm text-gray-300">
                   Keep me signed in
@@ -127,9 +179,10 @@ export default function AuthPage() {
               {/* Sign In Button */}
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </form>
 
@@ -152,7 +205,8 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleSocialLogin('Google')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with Google"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -166,7 +220,8 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleSocialLogin('GitHub')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with GitHub"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -177,7 +232,8 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => handleSocialLogin('LinkedIn')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with LinkedIn"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">

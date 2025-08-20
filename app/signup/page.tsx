@@ -2,9 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '../utils/supabase/client';
 import Header from '../components/Header';
 
 export default function SignupPage() {
+  const router = useRouter();
+  const supabase = createClient();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     company: '',
@@ -23,23 +29,78 @@ export default function SignupPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
       return;
     }
     if (!formData.acceptTerms) {
-      alert('Please accept the terms and conditions');
+      setError('Please accept the terms and conditions');
       return;
     }
-    console.log('Signup attempted:', formData);
-    // TODO: Implement actual registration logic
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+            company: formData.company,
+            newsletter: formData.newsletter
+          }
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          alert('Please check your email for a confirmation link to complete your registration!');
+          router.push('/auth');
+        } else if (data.session) {
+          // User is automatically signed in
+          router.push('/');
+        }
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSocialSignup = (provider: string) => {
-    console.log(`${provider} signup attempted`);
-    // TODO: Implement social authentication
+  const handleSocialSignup = async (provider: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider.toLowerCase() as 'google' | 'github' | 'linkedin',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+      }
+      // OAuth will redirect the user, so no need to handle navigation here
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,6 +132,13 @@ export default function SignupPage() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Signup Card */}
           <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 shadow-2xl">
             {/* Welcome Header */}
@@ -97,7 +165,8 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="Jane Doe"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -117,7 +186,8 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="Acme Manufacturing"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -137,7 +207,8 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="jane@acme.com"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -157,7 +228,8 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Minimum 8 characters with uppercase, lowercase, and numbers
@@ -180,7 +252,8 @@ export default function SignupPage() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                  disabled={loading}
+                  className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -194,7 +267,8 @@ export default function SignupPage() {
                     checked={formData.acceptTerms}
                     onChange={handleInputChange}
                     required
-                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mt-0.5"
+                    disabled={loading}
+                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mt-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <label htmlFor="acceptTerms" className="text-sm text-gray-300">
                     I agree to the{' '}
@@ -216,7 +290,8 @@ export default function SignupPage() {
                     name="newsletter"
                     checked={formData.newsletter}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mt-0.5"
+                    disabled={loading}
+                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mt-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <label htmlFor="newsletter" className="text-sm text-gray-300">
                     Subscribe to updates about new materials and industry insights
@@ -227,9 +302,10 @@ export default function SignupPage() {
               {/* Sign Up Button */}
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed px-6 py-3 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
@@ -252,7 +328,8 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => handleSocialSignup('Google')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with Google"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -266,7 +343,8 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => handleSocialSignup('GitHub')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with GitHub"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
@@ -277,7 +355,8 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => handleSocialSignup('LinkedIn')}
-                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg transition-colors group"
+                disabled={loading}
+                className="flex items-center justify-center p-3 bg-gray-700/50 hover:bg-gray-700 disabled:bg-gray-800 disabled:cursor-not-allowed border border-gray-600 rounded-lg transition-colors group"
                 title="Continue with LinkedIn"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
