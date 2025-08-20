@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
+import { createClient } from './utils/supabase/client';
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const [formData, setFormData] = useState({
     fullName: '',
     company: '',
@@ -18,6 +24,18 @@ export default function Home() {
     dfarsRequired: false
   });
 
+  // Pre-fill form with user data if logged in
+  useEffect(() => {
+    if (user && !loading) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.user_metadata?.full_name || '',
+        company: user.user_metadata?.company || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user, loading]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
@@ -28,9 +46,67 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    setSubmitting(true);
+    setMessage(null);
+
+    try {
+      if (user) {
+        // User is logged in - save to their account
+        const supabase = createClient();
+        
+        const { error } = await supabase
+          .from('quotes')
+          .insert({
+            user_id: user.id,
+            full_name: formData.fullName,
+            company: formData.company,
+            email: formData.email,
+            phone: formData.phone,
+            length: parseFloat(formData.length) || 0,
+            width: parseFloat(formData.width) || 0,
+            height: parseFloat(formData.height) || 0,
+            material: formData.material,
+            quantity: parseInt(formData.qty) || 1,
+            material_spec: formData.materialSpec,
+            dfars_required: formData.dfarsRequired,
+            additional_notes: '',
+            status: 'pending'
+          });
+
+        if (error) throw error;
+
+        setMessage({ type: 'success', text: 'Quote submitted successfully! Check your dashboard to track progress. 🎉' });
+        
+        // Reset form after successful submission
+        setTimeout(() => {
+          setFormData({
+            fullName: user.user_metadata?.full_name || '',
+            company: user.user_metadata?.company || '',
+            email: user.email || '',
+            phone: '',
+            length: '',
+            width: '',
+            height: '',
+            material: '',
+            qty: '1',
+            materialSpec: '',
+            dfarsRequired: false
+          });
+          setMessage(null);
+        }, 5000);
+
+      } else {
+        // User is not logged in - show message to create account
+        setMessage({ type: 'error', text: 'Please create an account or log in to submit quotes. This helps us track your requests and provide better service.' });
+      }
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      setMessage({ type: 'error', text: 'Failed to submit quote. Please try again or contact support.' });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -60,12 +136,37 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors">
-                  Start a quote
-                </button>
-                <button className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors">
-                  Create account
-                </button>
+                {user ? (
+                  <button 
+                    onClick={() => window.location.href = '/dashboard/submit-quote'}
+                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Submit Quote
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => window.location.href = '/signup'}
+                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Start a quote
+                  </button>
+                )}
+                {!user && (
+                  <button 
+                    onClick={() => window.location.href = '/signup'}
+                    className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Create account
+                  </button>
+                )}
+                {user && (
+                  <button 
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
+                  >
+                    Go to Dashboard
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
@@ -90,9 +191,31 @@ export default function Home() {
                 <h3 className="text-lg font-semibold">Quick quote</h3>
                 <span className="text-sm text-gray-400">Multi-line RFQ</span>
               </div>
+              
+              {user ? (
+                <p className="text-sm text-green-400 mb-4">
+                  ✓ Logged in as {user.user_metadata?.full_name || user.email}
+                </p>
+              ) : (
+                <p className="text-sm text-yellow-400 mb-4">
+                  ⚠️ Create an account to save and track your quotes
+                </p>
+              )}
+              
               <p className="text-sm text-gray-400 mb-6">
                 Lightweight RFQ: dimensions + material. We move fast.
               </p>
+
+              {/* Message Display */}
+              {message && (
+                <div className={`mb-4 p-3 rounded-lg text-sm ${
+                  message.type === 'success' 
+                    ? 'bg-green-900/30 border border-green-700/50 text-green-200' 
+                    : 'bg-red-900/30 border border-red-700/50 text-red-200'
+                }`}>
+                  {message.text}
+                </div>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -104,6 +227,7 @@ export default function Home() {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       placeholder="Jane Doe"
+                      required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -115,6 +239,7 @@ export default function Home() {
                       value={formData.company}
                       onChange={handleInputChange}
                       placeholder="Acme Machining"
+                      required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -129,6 +254,7 @@ export default function Home() {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="jane@acme.com"
+                      required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -154,6 +280,9 @@ export default function Home() {
                       value={formData.length}
                       onChange={handleInputChange}
                       placeholder="60.5"
+                      required
+                      step="0.01"
+                      min="0"
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -165,6 +294,9 @@ export default function Home() {
                       value={formData.width}
                       onChange={handleInputChange}
                       placeholder="14.5"
+                      required
+                      step="0.01"
+                      min="0"
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -176,6 +308,9 @@ export default function Home() {
                       value={formData.height}
                       onChange={handleInputChange}
                       placeholder="6"
+                      required
+                      step="0.01"
+                      min="0"
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -188,6 +323,7 @@ export default function Home() {
                       name="material"
                       value={formData.material}
                       onChange={handleInputChange}
+                      required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     >
                       <option value="">Select material</option>
@@ -206,6 +342,7 @@ export default function Home() {
                       value={formData.qty}
                       onChange={handleInputChange}
                       min="1"
+                      required
                       className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
                     />
                   </div>
@@ -242,9 +379,10 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded font-medium transition-colors"
+                    disabled={submitting}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 px-6 py-3 rounded font-medium transition-colors disabled:cursor-not-allowed"
                   >
-                    Submit RFQ
+                    {submitting ? 'Submitting...' : 'Submit RFQ'}
                   </button>
                   <button
                     type="button"

@@ -2,31 +2,96 @@
 
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Header from '../components/Header';
+import { createClient } from '../utils/supabase/client';
+
+interface QuoteStats {
+  total_quotes: number;
+  pending_quotes: number;
+  approved_quotes: number;
+  rejected_quotes: number;
+  in_progress_quotes: number;
+}
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin, userRole } = useAuth();
   const router = useRouter();
+  const [quoteStats, setQuoteStats] = useState<QuoteStats>({
+    total_quotes: 0,
+    pending_quotes: 0,
+    approved_quotes: 0,
+    rejected_quotes: 0,
+    in_progress_quotes: 0
+  });
+
+  const fetchQuoteStats = useCallback(async () => {
+    if (!user || isAdmin) return;
+    
+    try {
+      const supabase = createClient();
+      
+      // Get quote statistics
+      const { data: quotes, error } = await supabase
+        .from('quotes')
+        .select('status')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      
+      const stats = {
+        total_quotes: quotes?.length || 0,
+        pending_quotes: quotes?.filter(q => q.status === 'pending').length || 0,
+        approved_quotes: quotes?.filter(q => q.status === 'approved').length || 0,
+        rejected_quotes: quotes?.filter(q => q.status === 'rejected').length || 0,
+        in_progress_quotes: quotes?.filter(q => q.status === 'in_progress').length || 0
+      };
+      
+      setQuoteStats(stats);
+    } catch (err) {
+      console.error('Error fetching quote stats:', err);
+    }
+  }, [user, isAdmin]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth');
+    console.log('Dashboard useEffect - loading:', loading, 'user:', !!user, 'isAdmin:', isAdmin, 'userRole:', userRole);
+    
+    // Don't do anything while still loading
+    if (loading) {
+      return;
     }
-  }, [user, loading, router]);
+    
+    // Redirect to auth if no user
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+    
+    // Redirect to admin dashboard if user is admin
+    if (isAdmin) {
+      router.push('/admin/dashboard');
+      return;
+    }
+    
+    // Fetch quote stats for regular users
+    if (user && !isAdmin) {
+      fetchQuoteStats();
+    }
+  }, [user, loading, isAdmin, userRole, router, fetchQuoteStats]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
+        <div className="text-center max-w-sm mx-auto">
+          <div className="animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400 text-lg sm:text-base">Loading your dashboard...</p>
+          <p className="text-gray-500 text-sm mt-2">Please wait while we verify your credentials</p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!user || isAdmin) {
     return null; // Will redirect in useEffect
   }
 
@@ -59,11 +124,17 @@ export default function DashboardPage() {
                 <h3 className="text-xl font-semibold">Quick Actions</h3>
               </div>
               <div className="space-y-3">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-colors">
-                  Request Quote
+                <button 
+                  onClick={() => router.push('/dashboard/submit-quote')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Submit New Quote
                 </button>
-                <button className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors">
-                  View Orders
+                <button 
+                  onClick={() => router.push('/dashboard/quotes')}
+                  className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Show Past Quotes
                 </button>
                 <button className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors">
                   Contact Support
@@ -101,43 +172,72 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Recent Activity Card */}
+            {/* Account Summary Card */}
             <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold">Recent Activity</h3>
+                <h3 className="text-xl font-semibold">Account Summary</h3>
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center text-gray-400">
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
-                  <span>Successfully logged in</span>
+                  <span>Account Status: Active</span>
                 </div>
                 <div className="flex items-center text-gray-400">
                   <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
-                  <span>Account created</span>
+                  <span>Quotes Submitted: {quoteStats.total_quotes}</span>
                 </div>
                 <div className="flex items-center text-gray-400">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full mr-3"></div>
-                  <span>Profile updated</span>
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                  <span>Pending Quotes: {quoteStats.pending_quotes}</span>
+                </div>
+                <div className="flex items-center text-gray-400">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-3"></div>
+                  <span>Approved Quotes: {quoteStats.approved_quotes}</span>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Quote Summary Cards */}
+          {quoteStats.total_quotes > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-6">Quote Overview</h2>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-400">{quoteStats.total_quotes}</div>
+                  <div className="text-sm text-gray-400">Total Quotes</div>
+                </div>
+                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-yellow-400">{quoteStats.pending_quotes}</div>
+                  <div className="text-sm text-gray-400">Pending Review</div>
+                </div>
+                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-green-400">{quoteStats.approved_quotes}</div>
+                  <div className="text-sm text-gray-400">Approved</div>
+                </div>
+                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-blue-400">{quoteStats.in_progress_quotes}</div>
+                  <div className="text-sm text-gray-400">In Progress</div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Security Notice */}
           <div className="mt-8 bg-blue-900/30 border border-blue-700/50 rounded-xl p-6">
             <div className="flex items-start">
               <svg className="w-6 h-6 text-blue-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
               <div>
                 <h3 className="text-lg font-semibold mb-2">Secure Authentication</h3>
                 <p className="text-blue-200 text-sm">
-                  Your account is protected by Supabase's enterprise-grade security. 
+                  Your account is protected by Supabase&apos;s enterprise-grade security. 
                   All authentication data is encrypted and stored securely.
                 </p>
               </div>

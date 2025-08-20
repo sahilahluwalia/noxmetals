@@ -22,8 +22,32 @@ export default function AuthCallbackPage() {
         }
 
         if (data.session) {
-          // Successfully authenticated, redirect to home
-          router.push('/');
+          // Check if user is admin and redirect accordingly
+          try {
+            const { data: roleData, error: roleError } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', data.session.user.id)
+              .single();
+
+            if (roleError && roleError.code !== 'PGRST116') {
+              console.error('Error fetching user role:', roleError);
+            }
+
+            const userRole = roleData?.role || 'user';
+            
+            if (userRole === 'admin' || userRole === 'super_admin') {
+              // Admin user - redirect to admin dashboard
+              router.push('/admin/dashboard');
+            } else {
+              // Regular user - redirect to user dashboard
+              router.push('/dashboard');
+            }
+          } catch (roleErr) {
+            console.error('Error checking user role:', roleErr);
+            // Default to user dashboard if role check fails
+            router.push('/dashboard');
+          }
         } else {
           // No session found, redirect to login
           router.push('/auth');
