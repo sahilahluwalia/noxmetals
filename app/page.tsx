@@ -1,102 +1,521 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import Header from './components/Header';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [formData, setFormData] = useState({
+    fullName: '',
+    company: '',
+    email: '',
+    phone: '',
+    length: '',
+    width: '',
+    height: '',
+    material: '',
+    qty: '1',
+    materialSpec: '',
+    dfarsRequired: false
+  });
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Header Navigation */}
+      <Header />
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gray-800">
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-900/60"></div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            {/* Left Column - Hero Content */}
+            <div className="space-y-8">
+              <div>
+                <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+                  The Modern<br />Metals Supplier
+                </h1>
+                <p className="text-xl text-gray-300 mt-6 leading-relaxed">
+                  Nox Metals is building modern factories to supply America&apos;s 
+                  industrial base. We cut, process, and supply metals to those 
+                  who make parts.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors">
+                  Start a quote
+                </button>
+                <button className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors">
+                  Create account
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400">✦</span>
+                  <span>Fast quoting</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400">✦</span>
+                  <span>Lower landed costs</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400">✦</span>
+                  <span>Full doc tracking</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quote Form - Simplified */}
+            <div id="quote" className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Quick quote</h3>
+                <span className="text-sm text-gray-400">Multi-line RFQ</span>
+              </div>
+              <p className="text-sm text-gray-400 mb-6">
+                Lightweight RFQ: dimensions + material. We move fast.
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Full name</label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      placeholder="Jane Doe"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Company</label>
+                    <input
+                      type="text"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      placeholder="Acme Machining"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="jane@acme.com"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="(555) 123-4567"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Length (in)</label>
+                    <input
+                      type="number"
+                      name="length"
+                      value={formData.length}
+                      onChange={handleInputChange}
+                      placeholder="60.5"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Width (in)</label>
+                    <input
+                      type="number"
+                      name="width"
+                      value={formData.width}
+                      onChange={handleInputChange}
+                      placeholder="14.5"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Height (in)</label>
+                    <input
+                      type="number"
+                      name="height"
+                      value={formData.height}
+                      onChange={handleInputChange}
+                      placeholder="6"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Material</label>
+                    <select
+                      name="material"
+                      value={formData.material}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    >
+                      <option value="">Select material</option>
+                      <option value="6061-t6">6061-T6 Aluminum</option>
+                      <option value="7075-t6">7075-T6 Aluminum</option>
+                      <option value="5000-series">5000 Series Aluminum</option>
+                      <option value="7050-t7451">7050-T7451 Aluminum</option>
+                      <option value="p20-tool-steel">P20 Tool Steel</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Qty</label>
+                    <input
+                      type="number"
+                      name="qty"
+                      value={formData.qty}
+                      onChange={handleInputChange}
+                      min="1"
+                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Material specification (AMS/ASTM/ISO)
+                  </label>
+                  <input
+                    type="text"
+                    name="materialSpec"
+                    value={formData.materialSpec}
+                    onChange={handleInputChange}
+                    placeholder="e.g., AMS 4027 Rev G, T6"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Include revision/temper and any specific certification requirements for traceability and quality control.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="dfarsRequired"
+                    checked={formData.dfarsRequired}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                  />
+                  <label className="text-sm">DFARS required</label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded font-medium transition-colors"
+                  >
+                    Submit RFQ
+                  </button>
+                  <button
+                    type="button"
+                    className="border border-gray-600 hover:border-gray-500 px-6 py-3 rounded font-medium transition-colors"
+                  >
+                    Email us
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-400">
+                  By default: DFARS + domestic mill paperwork provided in the portal. 
+                  Custom quote to zane@noxmetals.co
+                </p>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Customer Logos */}
+      <section className="py-16 bg-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h3 className="text-center text-gray-400 text-sm mb-8">
+            Trusted by modern manufacturers
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center opacity-60">
+            {Array.from({ length: 12 }, (_, i) => (
+              <div key={i} className="h-12 bg-gray-700 rounded flex items-center justify-center">
+                <span className="text-xs text-gray-500">Logo {i + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Premium Materials */}
+      <section id="materials" className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Premium Materials</h2>
+            <p className="text-xl text-gray-300">
+              Aerospace grade and other solutions for automotive, defense, medical, and industrial applications
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            {[
+              {
+                title: "5000 Series Aluminum",
+                subtitle: "5000 Series (5052-H32, 5083-H321)",
+                description: "Marine grade aluminum with excellent corrosion resistance",
+                sizes: "Up to 144.5\" × 60.5\" or smaller"
+              },
+              {
+                title: "6061-T6 Aluminum",
+                subtitle: "6061-T6 (QQ-A-200/8, T6511)",
+                description: "Excellent corrosion resistance and weldability",
+                sizes: "Up to 144.5\" × 60.5\" or smaller"
+              },
+              {
+                title: "7075 Aluminum",
+                subtitle: "7075-T6 (QQ-A-250/12, T6511)",
+                description: "High strength aerospace grade aluminum",
+                sizes: "Up to 144.5\" × 60.5\" or smaller"
+              },
+              {
+                title: "7050-T7451 Aluminum",
+                subtitle: "7050-T7451 (QQ-A-250/13)",
+                description: "Superior fracture toughness and fatigue resistance",
+                sizes: "Up to 144.5\" × 60.5\" or smaller"
+              },
+              {
+                title: "P20 Tool Steel",
+                subtitle: "P20 (1.2311, 4140 Modified)",
+                description: "Pre-hardened tool steel for precision tooling",
+                sizes: "Up to 144.5\" × 60.5\" or smaller"
+              }
+            ].map((material, index) => (
+              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
+                <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
+                <p className="text-sm text-gray-300 mb-4">{material.description}</p>
+                
+                <div className="mb-4">
+                  <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Bar</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Round</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-500">{material.sizes}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <button className="bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded-lg border border-gray-600 transition-colors">
+              🔜 More materials coming soon
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Nox Metals */}
+      <section className="py-24 bg-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Why Nox Metals</h2>
+            <p className="text-xl text-gray-300">
+              Speed, cost, and software-first visibility for machinists.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Speed</h3>
+              <p className="text-gray-300">
+                Quote fast. Cut, pack, and ship quickly with software-paced ops.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Cost</h3>
+              <p className="text-gray-300">
+                Optimized nesting + routing to lower landed costs without surprises.
+              </p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">📱</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Software</h3>
+              <p className="text-gray-300">
+                End-to-end visibility—orders, certs, paperwork—in one portal with AI assist.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Operational Advantages */}
+      <section className="py-24 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">🚀</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Same‑day quotes</h3>
+              <p className="text-sm text-gray-400">Instant pricing + lead times.</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">📊</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Lower landed cost</h3>
+              <p className="text-sm text-gray-400">Optimized nesting + sourcing.</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">✅</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">DFARS compliant</h3>
+              <p className="text-sm text-gray-400">Traceability and certs on file.</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl">🚚</span>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Nationwide shipping</h3>
+              <p className="text-sm text-gray-400">Fast dispatch, insured freight.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-blue-600">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold mb-4">Ready to move faster?</h2>
+          <p className="text-xl mb-8 text-blue-100">
+            Send dimensions today. We&apos;ll reply with price + lead time and set you up in the portal.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium transition-colors">
+              Start a quote
+            </button>
+            <a href="/contact" className="border border-blue-200 hover:border-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors inline-block text-center">
+              Email us
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Mission Section */}
+      <section id="mission" className="py-24 bg-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-8">Our mission</h2>
+            <p className="text-xl leading-relaxed text-gray-300">
+              Nox Metals exists to reindustrialize America by rebuilding the nation&apos;s 
+              industrial supply chain from the ground up. We are creating the modern metals 
+              supplier that is fast, software driven, and built to arm the factories that 
+              power our economy. By delivering certified domestic metal at unprecedented 
+              speed and scale, we strengthen the industrial base and give American 
+              manufacturing the tools to win.
+            </p>
+          </div>
+
+          {/* Photo Gallery */}
+          <div className="mt-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {Array.from({ length: 20 }, (_, i) => (
+                <div key={i} className="aspect-square bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                    <span className="text-xs text-gray-500">Photo {i + 1}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 border-t border-gray-800 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-gray-400">© 2025 Nox Metals. All rights reserved.</p>
+            </div>
+            
+            <div className="flex items-center space-x-6 mb-4 md:mb-0">
+              <span className="text-gray-400">Backed by YC</span>
+              <div className="flex space-x-4">
+                <span className="w-6 h-6 bg-gray-700 rounded"></span>
+                <span className="w-6 h-6 bg-gray-700 rounded"></span>
+                <span className="w-6 h-6 bg-gray-700 rounded"></span>
+              </div>
+            </div>
+
+            <div className="flex space-x-6 text-sm">
+              <a href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms</a>
+              <a href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy</a>
+              <a href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</a>
+            </div>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-gray-800 text-center">
+            <p className="text-gray-400">
+              Send direct quotes to{' '}
+              <a href="mailto:zane@noxmetals.co" className="text-blue-400 hover:text-blue-300 transition-colors">
+                zane@noxmetals.co
+              </a>
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
