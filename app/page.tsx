@@ -155,7 +155,7 @@ export default function Home() {
             additionalNotes: ''
           });
           setMessage(null);
-        }, 5000);
+        }, 3000);
 
       } else {
         // User is not logged in - submit quote anonymously and encourage login
@@ -370,8 +370,8 @@ export default function Home() {
                       <div className="text-sm text-orange-200">
                         <p className="mb-3">🔒 This feature requires authentication to access.</p>
                         <div className="mt-4 text-xs text-orange-300">
-                          <p>⏱️ Redirecting to login page in 5 seconds...</p>
-                          <p>💡 <strong>P.S:</strong> Like this feature? <em>Hire me :)</em> 🚀</p>
+                          <p>⏱️ Redirecting to login page in 3 seconds...</p>
+                          {/* <p>💡 <strong>P.S:</strong> Like this feature? <em>Hire me :)</em> 🚀</p> */}
                         </div>
                       </div>
                     </div>
