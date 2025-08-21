@@ -41,11 +41,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   // Using singleton supabase instance
 
   const fetchUserRole = useCallback(async (userId: string) => {
     try {
+      setRoleLoading(true);
       console.log('Fetching user role for userId:', userId);
       const { data, error } = await supabase
         .from('user_roles')
@@ -87,8 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setUserRole(defaultRole);
       console.log('Set fallback user role:', defaultRole);
+    } finally {
+      setRoleLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   // Add a timeout mechanism to prevent infinite loading
   useEffect(() => {
@@ -118,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchUserRole(session.user.id);
         } else {
           console.log('No user found in session');
+          setUserRole(null);
         }
       } catch (error) {
         console.error('Error getting initial session:', error);
@@ -152,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth, fetchUserRole]);
+  }, [fetchUserRole]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -184,10 +189,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = userRole?.role === 'admin' || userRole?.role === 'super_admin';
   const isSuperAdmin = userRole?.role === 'super_admin';
 
+  // Combine loading states: still loading if either session or role is loading
+  const isLoading = loading || roleLoading;
+
   const value = {
     user,
     session,
-    loading,
+    loading: isLoading,
     userRole,
     isAdmin,
     isSuperAdmin,

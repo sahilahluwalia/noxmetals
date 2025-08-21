@@ -77,15 +77,18 @@ export default function DashboardPage() {
     
     // Redirect to admin dashboard if user is admin
     if (isAdmin) {
+      console.log('User is admin, redirecting to admin dashboard');
       router.push('/admin/dashboard');
       return;
     }
-    
-    // Fetch quote stats for regular users
-    if (user && !isAdmin) {
+  }, [user, loading, isAdmin, userRole, router]);
+
+  // Separate effect for fetching quote stats to avoid dependency issues
+  useEffect(() => {
+    if (!loading && user && !isAdmin) {
       fetchQuoteStats();
     }
-  }, [user, loading, isAdmin, userRole, router, fetchQuoteStats]);
+  }, [user, loading, isAdmin, fetchQuoteStats]);
 
   
 

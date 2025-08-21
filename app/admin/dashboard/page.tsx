@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
@@ -23,7 +23,7 @@ interface AdminQuote {
   additional_notes: string;
   status: string;
   user_email: string;
-  user_metadata: any;
+  user_metadata: Record<string, unknown>;
   user_role: string;
 }
 
@@ -50,20 +50,7 @@ export default function AdminDashboardPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [updatingQuote, setUpdatingQuote] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth');
-    } else if (!loading && user && !isAdmin) {
-      router.push('/dashboard');
-    }
-    
-    if (user && isAdmin) {
-      fetchQuotes();
-      fetchStats();
-    }
-  }, [user, loading, isAdmin, router]);
-
-  const fetchQuotes = async () => {
+  const fetchQuotes = useCallback(async () => {
     if (!user || !isAdmin) return;
     
     try {
@@ -84,9 +71,9 @@ export default function AdminDashboardPage() {
     } finally {
       setLoadingQuotes(false);
     }
-  };
+  }, [user, isAdmin]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user || !isAdmin) return;
     
     try {
@@ -100,6 +87,51 @@ export default function AdminDashboardPage() {
       setStats(data?.[0] || null);
     } catch (err) {
       console.error('Error fetching stats:', err);
+    }
+  }, [user, isAdmin]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/auth');
+    } else if (!loading && user && !isAdmin) {
+      router.push('/dashboard');
+    }
+    
+    if (user && isAdmin) {
+      fetchQuotes();
+      fetchStats();
+    }
+  }, [user, loading, isAdmin, router, fetchQuotes, fetchStats]);
+
+  const sendQuoteStatusEmail = async (quote: AdminQuote, newStatus: string) => {
+    try {
+      const response = await fetch('/api/send-quote-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quoteId: quote.id,
+          status: newStatus,
+          customerEmail: quote.user_email,
+          customerName: quote.full_name,
+          material: quote.material,
+          quantity: quote.quantity,
+          dimensions: `${quote.length}" × ${quote.width}" × ${quote.height}"`,
+          company: quote.company,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Email sending failed:', errorData);
+        // Don't throw error here as the quote status update should still proceed
+      } else {
+        console.log('Email sent successfully for quote:', quote.id);
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      // Don't throw error here as the quote status update should still proceed
     }
   };
 
@@ -119,6 +151,14 @@ export default function AdminDashboardPage() {
         .eq('id', quoteId);
 
       if (error) throw error;
+      
+      // Find the quote for email sending
+      const quote = quotes.find(q => q.id === quoteId);
+      
+      // Send email notification if status is approved or rejected
+      if (quote && (newStatus === 'approved' || newStatus === 'rejected')) {
+        await sendQuoteStatusEmail(quote, newStatus);
+      }
       
       // Update local state
       setQuotes(prev => prev.map(q => 
@@ -334,7 +374,7 @@ export default function AdminDashboardPage() {
               {/* Quotes Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {filteredQuotes.map((quote) => (
-                  <div key={quote.id} className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
+                  <div key={quote.id} className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 flex flex-col h-full">
                     {/* Quote Header */}
                     <div className="flex justify-between items-start mb-4">
                       <div>
@@ -351,7 +391,7 @@ export default function AdminDashboardPage() {
                     </div>
 
                     {/* Quote Details */}
-                    <div className="space-y-3 mb-4">
+                    <div className="space-y-3 mb-4 flex-grow">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-400">Company:</span>
@@ -390,34 +430,68 @@ export default function AdminDashboardPage() {
                     </div>
 
                     {/* Quote Footer */}
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-700/50">
-                      <span className="text-xs text-gray-400">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t border-gray-700/50 mt-auto">
+                      <span className="text-xs text-gray-400 order-2 sm:order-1">
                         Submitted {formatDate(quote.created_at)}
                       </span>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2 order-1 sm:order-2 w-full sm:w-auto">
                         <button 
                           onClick={() => openQuoteDetails(quote)}
-                          className="text-blue-400 hover:text-blue-300 text-sm transition-colors font-medium"
+                          className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
                         >
-                          View Details
+                          <span className="flex items-center justify-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            View Details
+                          </span>
                         </button>
                         {quote.status === 'pending' && (
-                          <div className="flex gap-2">
+                          <>
                             <button 
                               onClick={() => updateQuoteStatus(quote.id, 'approved')}
                               disabled={updatingQuote === quote.id}
-                              className="text-green-400 hover:text-green-300 text-sm transition-colors font-medium disabled:opacity-50"
+                              className="flex-1 sm:flex-none px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
-                              {updatingQuote === quote.id ? 'Updating...' : 'Approve'}
+                              <span className="flex items-center justify-center gap-1">
+                                {updatingQuote === quote.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    Updating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Approve
+                                  </>
+                                )}
+                              </span>
                             </button>
                             <button 
                               onClick={() => updateQuoteStatus(quote.id, 'rejected')}
                               disabled={updatingQuote === quote.id}
-                              className="text-red-400 hover:text-red-300 text-sm transition-colors font-medium disabled:opacity-50"
+                              className="flex-1 sm:flex-none px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                             >
-                              {updatingQuote === quote.id ? 'Updating...' : 'Reject'}
+                              <span className="flex items-center justify-center gap-1">
+                                {updatingQuote === quote.id ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    Updating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Reject
+                                  </>
+                                )}
+                              </span>
                             </button>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
@@ -561,30 +635,63 @@ export default function AdminDashboardPage() {
 
             {/* Modal Footer */}
             <div className="sticky bottom-0 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700/50 p-6 rounded-b-2xl">
-              <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <div className="flex flex-col sm:flex-row gap-3 justify-end items-stretch sm:items-center">
                 {selectedQuote.status === 'pending' && (
                   <>
                     <button 
                       onClick={() => updateQuoteStatus(selectedQuote.id, 'approved')}
                       disabled={updatingQuote === selectedQuote.id}
-                      className="w-full sm:w-auto px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                      className="w-full sm:w-auto px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {updatingQuote === selectedQuote.id ? 'Updating...' : 'Approve Quote'}
+                      <span className="flex items-center justify-center gap-2">
+                        {updatingQuote === selectedQuote.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Approve Quote
+                          </>
+                        )}
+                      </span>
                     </button>
                     <button 
                       onClick={() => updateQuoteStatus(selectedQuote.id, 'rejected')}
                       disabled={updatingQuote === selectedQuote.id}
-                      className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                      className="w-full sm:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                     >
-                      {updatingQuote === selectedQuote.id ? 'Updating...' : 'Reject Quote'}
+                      <span className="flex items-center justify-center gap-2">
+                        {updatingQuote === selectedQuote.id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Reject Quote
+                          </>
+                        )}
+                      </span>
                     </button>
                   </>
                 )}
                 <button
                   onClick={closeQuoteDetails}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  className="w-full sm:w-auto px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
                 >
-                  Close
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close
+                  </span>
                 </button>
               </div>
             </div>
