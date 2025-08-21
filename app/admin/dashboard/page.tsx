@@ -37,6 +37,20 @@ interface AdminStats {
   admin_users: number;
 }
 
+interface AdminUser {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
+  phone: string | null;
+  user_metadata: Record<string, unknown>;
+  role: 'user' | 'admin' | 'super_admin';
+  role_created_at: string | null;
+  role_updated_at: string | null;
+  app_metadata: Record<string, unknown>;
+}
+
 export default function AdminDashboardPage() {
   const { user, loading, isAdmin } = useAuth();
   const router = useRouter();
@@ -49,6 +63,15 @@ export default function AdminDashboardPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [updatingQuote, setUpdatingQuote] = useState<string | null>(null);
+  
+  // User management state
+  const [activeTab, setActiveTab] = useState<'quotes' | 'users'>('quotes');
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState<string>('');
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
 
   const fetchQuotes = useCallback(async () => {
     if (!user || !isAdmin) return;
@@ -90,6 +113,39 @@ export default function AdminDashboardPage() {
     }
   }, [user, isAdmin]);
 
+  const fetchUsers = useCallback(async () => {
+    if (!user || !isAdmin) return;
+    
+    try {
+      setLoadingUsers(true);
+
+      const response = await fetch('/api/admin/users', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch users');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setUsers(data.users || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch users');
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError(`Failed to load users: ${err instanceof Error ? err.message : 'Please try again.'}`);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [user, isAdmin]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/auth');
@@ -100,8 +156,11 @@ export default function AdminDashboardPage() {
     if (user && isAdmin) {
       fetchQuotes();
       fetchStats();
+      if (activeTab === 'users') {
+        fetchUsers();
+      }
     }
-  }, [user, loading, isAdmin, router, fetchQuotes, fetchStats]);
+  }, [user, loading, isAdmin, router, fetchQuotes, fetchStats, fetchUsers, activeTab]);
 
   const sendQuoteStatusEmail = async (quote: AdminQuote, newStatus: string) => {
     try {
@@ -238,6 +297,48 @@ export default function AdminDashboardPage() {
     return material.charAt(0).toUpperCase() + material.slice(1).replace('-', ' ');
   };
 
+  // User management helper functions
+  const openUserDetails = (user: AdminUser) => {
+    setSelectedUser(user);
+    setShowUserDetailsModal(true);
+  };
+
+  const closeUserDetails = () => {
+    setShowUserDetailsModal(false);
+    setSelectedUser(null);
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'super_admin':
+        return 'bg-purple-600';
+      case 'admin':
+        return 'bg-blue-600';
+      case 'user':
+      default:
+        return 'bg-gray-600';
+    }
+  };
+
+  const getRoleText = (role: string) => {
+    switch (role.toLowerCase()) {
+      case 'super_admin':
+        return 'Super Admin';
+      case 'admin':
+        return 'Admin';
+      case 'user':
+      default:
+        return 'User';
+    }
+  };
+
+  const handleTabSwitch = (tab: 'quotes' | 'users') => {
+    setActiveTab(tab);
+    if (tab === 'users' && users.length === 0) {
+      fetchUsers();
+    }
+  };
+
   // Filter quotes based on status and search term
   const filteredQuotes = quotes.filter(quote => {
     const matchesStatus = filterStatus === 'all' || quote.status === filterStatus;
@@ -248,6 +349,19 @@ export default function AdminDashboardPage() {
       quote.material.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesStatus && matchesSearch;
+  });
+
+  // Filter users based on role and search term
+  const filteredUsers = users.filter(user => {
+    const matchesRole = userRoleFilter === 'all' || user.role === userRoleFilter;
+    const fullName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
+    const company = typeof user.user_metadata?.company === 'string' ? user.user_metadata.company : '';
+    const matchesSearch = userSearchTerm === '' || 
+      user.email.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+      fullName.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+      company.toLowerCase().includes(userSearchTerm.toLowerCase());
+    
+    return matchesRole && matchesSearch;
   });
 
   if (loading) {
@@ -278,13 +392,49 @@ export default function AdminDashboardPage() {
               <div>
                 <h1 className="text-4xl font-bold mb-2">Admin Dashboard 👑</h1>
                 <p className="text-gray-400 text-lg">
-                  Manage all quote requests and user submissions
+                  Manage all quote requests and user accounts
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="px-3 py-1 bg-purple-600 rounded-full text-sm font-medium">
                   Admin Access
                 </span>
+              </div>
+            </div>
+
+            {/* Tab Navigation */}
+            <div className="mt-6">
+              <div className="flex space-x-1 bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-1">
+                <button
+                  onClick={() => handleTabSwitch('quotes')}
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    activeTab === 'quotes'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Quote Management
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleTabSwitch('users')}
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    activeTab === 'users'
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                    User Management
+                  </span>
+                </button>
               </div>
             </div>
           </div>
@@ -318,35 +468,38 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* Filters and Search */}
-          <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-400 mb-2">Search Quotes</label>
-                <input
-                  type="text"
-                  placeholder="Search by name, company, email, or material..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+          {/* Quote Management Content */}
+          {activeTab === 'quotes' && (
+            <>
+              {/* Filters and Search */}
+              <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Search Quotes</label>
+                    <input
+                      type="text"
+                      placeholder="Search by name, company, email, or material..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Filter by Status</label>
+                    <select
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="in_progress">In Progress</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Filter by Status</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="in_progress">In Progress</option>
-                </select>
-              </div>
-            </div>
-          </div>
 
           {/* Quotes List */}
           {loadingQuotes ? (
@@ -499,6 +652,134 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             </div>
+          )}
+            </>
+          )}
+
+          {/* User Management Content */}
+          {activeTab === 'users' && (
+            <>
+              {/* User Filters and Search */}
+              <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 mb-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Search Users</label>
+                    <input
+                      type="text"
+                      placeholder="Search by email, name, or company..."
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2">Filter by Role</label>
+                    <select
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value)}
+                      className="px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="user">Users</option>
+                      <option value="admin">Admins</option>
+                      <option value="super_admin">Super Admins</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Users List */}
+              {loadingUsers ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading users...</p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No users found</h3>
+                  <p className="text-gray-400">
+                    {userSearchTerm || userRoleFilter !== 'all' 
+                      ? 'Try adjusting your search or filter criteria.'
+                      : 'No users are registered yet.'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Users Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredUsers.map((user) => (
+                      <div key={user.id} className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6 flex flex-col h-full">
+                        {/* User Header */}
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold mb-1 truncate">
+                              {(typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null) || 'No Name'}
+                            </h3>
+                            <p className="text-sm text-gray-400 truncate">
+                              {user.email}
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${getRoleColor(user.role)} ml-2 flex-shrink-0`}>
+                            {getRoleText(user.role)}
+                          </span>
+                        </div>
+
+                        {/* User Details */}
+                        <div className="space-y-3 mb-4 flex-grow">
+                          <div className="grid grid-cols-1 gap-3 text-sm">
+                            {typeof user.user_metadata?.company === 'string' && user.user_metadata.company && (
+                              <div>
+                                <span className="text-gray-400">Company:</span>
+                                <p className="text-white truncate">{user.user_metadata.company}</p>
+                              </div>
+                            )}
+                            
+                            <div>
+                              <span className="text-gray-400">Status:</span>
+                              <p className={`text-sm ${user.email_confirmed_at ? 'text-green-400' : 'text-yellow-400'}`}>
+                                {user.email_confirmed_at ? 'Verified' : 'Pending Verification'}
+                              </p>
+                            </div>
+                            
+                            {user.last_sign_in_at && (
+                              <div>
+                                <span className="text-gray-400">Last Login:</span>
+                                <p className="text-white text-sm">{formatDate(user.last_sign_in_at)}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* User Footer */}
+                        <div className="flex flex-col gap-3 pt-4 border-t border-gray-700/50 mt-auto">
+                          <span className="text-xs text-gray-400">
+                            Joined {formatDate(user.created_at)}
+                          </span>
+                          <button 
+                            onClick={() => openUserDetails(user)}
+                            className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                          >
+                            <span className="flex items-center justify-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
@@ -685,6 +966,147 @@ export default function AdminDashboardPage() {
                 <button
                   onClick={closeQuoteDetails}
                   className="w-full sm:w-auto px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Close
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Details Modal */}
+      {showUserDetailsModal && selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-gray-800/95 backdrop-blur-sm border-b border-gray-700/50 p-6 rounded-t-2xl">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">
+                    User Details 👤
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium text-white ${getRoleColor(selectedUser.role)}`}>
+                      {getRoleText(selectedUser.role)}
+                    </span>
+                    <span className="text-sm text-gray-400">
+                      ID: {selectedUser.id.slice(0, 8)}...
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={closeUserDetails}
+                  className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700/50 rounded-lg"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div className="bg-gray-700/30 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3 text-green-400">Basic Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-400 text-sm">Full Name:</span>
+                    <p className="text-white font-medium">{(typeof selectedUser.user_metadata?.full_name === 'string' ? selectedUser.user_metadata.full_name : null) || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-sm">Email:</span>
+                    <p className="text-white font-medium break-all">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-sm">Phone:</span>
+                    <p className="text-white font-medium">{selectedUser.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-sm">Company:</span>
+                    <p className="text-white font-medium">{(typeof selectedUser.user_metadata?.company === 'string' ? selectedUser.user_metadata.company : null) || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Status */}
+              <div className="bg-gray-700/30 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3 text-blue-400">Account Status</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-400 text-sm">Email Verified:</span>
+                    <p className={`font-medium ${selectedUser.email_confirmed_at ? 'text-green-400' : 'text-yellow-400'}`}>
+                      {selectedUser.email_confirmed_at ? 'Yes' : 'Pending'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-sm">Role:</span>
+                    <p className="text-white font-medium">{getRoleText(selectedUser.role)}</p>
+                  </div>
+                  {selectedUser.last_sign_in_at && (
+                    <div>
+                      <span className="text-gray-400 text-sm">Last Login:</span>
+                      <p className="text-white font-medium">{formatDate(selectedUser.last_sign_in_at)}</p>
+                    </div>
+                  )}
+                </div>
+                
+                {selectedUser.email_confirmed_at && (
+                  <div className="mt-4">
+                    <span className="text-gray-400 text-sm">Email Confirmed:</span>
+                    <p className="text-white font-medium">{formatDate(selectedUser.email_confirmed_at)}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Registration Information */}
+              <div className="bg-gray-700/30 rounded-xl p-4">
+                <h3 className="text-lg font-semibold mb-3 text-purple-400">Registration Information</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-gray-400 text-sm">Joined:</span>
+                    <p className="text-white font-medium">{formatDate(selectedUser.created_at)}</p>
+                  </div>
+                  {selectedUser.role_created_at && (
+                    <div>
+                      <span className="text-gray-400 text-sm">Role Assigned:</span>
+                      <p className="text-white font-medium">{formatDate(selectedUser.role_created_at)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Additional Metadata */}
+              {Object.keys(selectedUser.user_metadata || {}).length > 0 && (
+                <div className="bg-gray-700/30 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold mb-3 text-yellow-400">Additional Information</h3>
+                  <div className="space-y-2">
+                    {Object.entries(selectedUser.user_metadata || {}).map(([key, value]) => (
+                      key !== 'full_name' && key !== 'company' && (
+                        <div key={key} className="flex justify-between items-start">
+                          <span className="text-gray-400 text-sm capitalize">{key.replace('_', ' ')}:</span>
+                          <span className="text-white text-sm ml-4 text-right">{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}</span>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700/50 p-6 rounded-b-2xl">
+              <div className="flex justify-end">
+                <button
+                  onClick={closeUserDetails}
+                  className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
                 >
                   <span className="flex items-center justify-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
