@@ -161,7 +161,7 @@ export default function AuthPageLayout({
                     <div>
                       <h4 className="text-sm font-medium text-yellow-300 mb-1">Live Email Notifications</h4>
                       <p className="text-xs text-yellow-200">
-                        Users receive important updates directly to their email when quote or RFQ status changes by admins. 📧
+                      Email notifications are sent to users when quote or RFQ status changes. The demo user account receives real emails.
                       </p>
                     </div>
                   </div>
