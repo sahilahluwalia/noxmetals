@@ -3,8 +3,30 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
+import SlidingCarousel from './components/SlidingCarousel';
 import { supabase } from './utils/supabase/client';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from './utils/schemas/quoteSchemas';
+
+const customerLogos = [
+  '/clients/1.png',
+  '/clients/2.png',
+  '/clients/3.png',
+  '/clients/4.png',
+]
+
+// Example: Additional carousel data
+const partnerLogos = [
+  '/humans/1.png',
+  '/humans/2.png',
+  '/humans/3.png',
+  '/humans/4.png',
+  '/humans/5.png', 
+  '/humans/6.png',
+  '/humans/7.png',
+  '/humans/8.png',
+  '/humans/9.png',
+  
+]
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -231,8 +253,8 @@ export default function Home() {
                   </button>
                 ) : (
                   <button 
-                    onClick={() => window.location.href = '/signup'}
-                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
+                    onClick={() => document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer"
                   >
                     Start a quote
                   </button>
@@ -275,7 +297,12 @@ export default function Home() {
             <div id="quote" className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Quick quote</h3>
-                <span className="text-sm text-gray-400">Multi-line RFQ</span>
+                <button
+                  onClick={() => window.location.href = '/dashboard/multiline-rfq'}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline"
+                >
+                  Multi-line RFQ
+                </button>
               </div>
               
               {user ? (
@@ -572,12 +599,12 @@ export default function Home() {
                   >
                     {submitting ? 'Submitting...' : 'Submit RFQ'}
                   </button>
-                  <button
-                    type="button"
-                    className="border border-gray-600 hover:border-gray-500 px-6 py-3 rounded font-medium transition-colors"
+                  <a
+                    href="mailto:zane@noxmetals.co?subject=Quote Request&body=Hi Zane,%0A%0AI'd like to discuss a quote for:"
+                    className="border border-gray-600 hover:border-gray-500 px-6 py-3 rounded font-medium transition-colors inline-block text-center"
                   >
                     Email us
-                  </button>
+                  </a>
                 </div>
 
                 <p className="text-xs text-gray-400">
@@ -593,16 +620,11 @@ export default function Home() {
       {/* Customer Logos */}
       <section className="py-16 bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h3 className="text-center text-gray-400 text-sm mb-8">
-            Trusted by modern manufacturers
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center opacity-60">
-            {Array.from({ length: 12 }, (_, i) => (
-              <div key={i} className="h-12 bg-gray-700 rounded flex items-center justify-center">
-                <span className="text-xs text-gray-500">Logo {i + 1}</span>
-              </div>
-            ))}
-          </div>
+          <SlidingCarousel 
+            items={customerLogos}
+            title="Trusted by modern manufacturers"
+            speed={20}
+          />
         </div>
       </section>
 
@@ -649,22 +671,26 @@ export default function Home() {
                 sizes: "Up to 144.5\" × 60.5\" or smaller"
               }
             ].map((material, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
-                <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
-                <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
-                <p className="text-sm text-gray-300 mb-4">{material.description}</p>
-                
-                <div className="mb-4">
-                  <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
-                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Bar</span>
-                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Round</span>
-                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
-                  </div>
+              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors flex flex-col h-full">
+                <div className="flex-grow">
+                  <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
+                  <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
+                  <p className="text-sm text-gray-300 mb-4">{material.description}</p>
                 </div>
                 
-                <p className="text-xs text-gray-500">{material.sizes}</p>
+                <div className="mt-auto">
+                  <div className="mb-4">
+                    <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
+                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Bar</span>
+                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Round</span>
+                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-500">{material.sizes}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -769,10 +795,13 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium transition-colors">
+            <button 
+              onClick={() => document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer"
+            >
               Start a quote
             </button>
-            <a href="/contact" className="border border-blue-200 hover:border-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors inline-block text-center">
+            <a href="mailto:zane@noxmetals.co?subject=Quote Inquiry&body=Hi Zane,%0A%0AI'm interested in getting a quote for:" className="border border-blue-200 hover:border-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors inline-block text-center">
               Email us
             </a>
           </div>
@@ -782,7 +811,7 @@ export default function Home() {
       {/* Mission Section */}
       <section id="mission" className="py-24 bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
+          <div className="text-center mb-5">
             <h2 className="text-4xl font-bold mb-8">Our mission</h2>
             <p className="text-xl leading-relaxed text-gray-300">
               Nox Metals exists to reindustrialize America by rebuilding the nation&apos;s 
@@ -794,20 +823,20 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Photo Gallery */}
-          <div className="mt-16">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {Array.from({ length: 20 }, (_, i) => (
-                <div key={i} className="aspect-square bg-gray-800 rounded-lg overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
-                    <span className="text-xs text-gray-500">Photo {i + 1}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Sliding Carousel */}
+          <SlidingCarousel 
+            items={partnerLogos}
+            title=""
+            speed={30}
+            imageSize={200}
+            spacing="mx-8"
+            opacity="opacity-40"
+          />
+            
         </div>
       </section>
+
+     
 
       {/* Footer */}
       <footer className="bg-gray-900 border-t border-gray-800 py-12">
@@ -820,9 +849,6 @@ export default function Home() {
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <span className="text-gray-400">Backed by YC</span>
               <div className="flex space-x-4">
-                <span className="w-6 h-6 bg-gray-700 rounded"></span>
-                <span className="w-6 h-6 bg-gray-700 rounded"></span>
-                <span className="w-6 h-6 bg-gray-700 rounded"></span>
               </div>
             </div>
 
