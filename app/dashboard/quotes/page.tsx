@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 import { QuotesArraySchema, QuoteSchema, type Quote } from '../../utils/schemas/quoteSchemas';
+import Link from 'next/link';
 
 // Quote type is now imported from schemas
 
@@ -209,28 +210,28 @@ export default function QuotesPage() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <button
-              onClick={() => router.back()}
+            <Link
+              href="/dashboard"
               className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back to Dashboard
-            </button>
+            </Link>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h1 className="text-4xl font-bold mb-2">Your Quote History 📋</h1>
+                <h1 className="text-4xl font-bold mb-2">Your Quote History</h1>
                 <p className="text-gray-400 text-lg">
                   View all your submitted quote requests and their current status
                 </p>
               </div>
-              <button
-                onClick={() => router.push('/dashboard/submit-quote')}
+              <Link
+                href="/dashboard/submit-quote"
                 className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-medium transition-colors"
               >
                 Submit New Quote
-              </button>
+              </Link>
             </div>
           </div>
 

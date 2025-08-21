@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Header from '../components/Header';
 import { supabase } from '../utils/supabase/client';
+import Link from 'next/link';
 
 interface QuoteStats {
   total_quotes: number;
@@ -152,43 +153,58 @@ export default function DashboardPage() {
             {/* Quick Actions Card */}
             <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-6">
               <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
+                
                 <h3 className="text-xl font-semibold">Quick Actions</h3>
               </div>
-              <div className="space-y-3">
-                <button 
-                  onClick={() => router.push('/dashboard/submit-quote')}
-                  className="w-full bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Submit New Quote
-                </button>
-                <button 
-                  onClick={() => router.push('/dashboard/multiline-rfq')}
-                  className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>🚀</span>
-                  Multi-Line RFQ
-                </button>
-                <button 
-                  onClick={() => router.push('/dashboard/quotes')}
-                  className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Show Past Quotes
-                </button>
-                <button 
-                  onClick={() => router.push('/dashboard/rfq-history')}
-                  className="w-full bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>🚀</span>
-                  Multi-Line RFQ History
-                </button>
-                <button className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors">
-                  Contact Support
-                </button>
+              <div className="space-y-6">
+                {/* Quotes Section */}
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Quotes</div>
+                  <div className="space-y-3">
+                    <Link
+                      href="/dashboard/submit-quote"
+                      className="w-full cursor-pointer bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      Submit New Quote
+                    </Link>
+                    <Link
+                      href="/dashboard/quotes"
+                      className="w-full cursor-pointer bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      Show Past Quotes
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Multi-Line RFQ Section */}
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Multi-Line RFQ</div>
+                  <div className="space-y-3">
+                    <Link
+                      href="/dashboard/multiline-rfq"
+                      className="w-full cursor-pointer bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      Multi-Line RFQ
+                    </Link>
+                    <Link
+                      href="/dashboard/rfq-history"
+                      className="w-full cursor-pointer bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      Multi-Line RFQ History
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Support Section */}
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Support</div>
+                  <Link
+                    href="/dashboard/contact-support"
+                    className="w-full cursor-pointer bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    Contact Support
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -297,7 +313,6 @@ export default function DashboardPage() {
                   {multilineRfqStats.total_rfqs > 0 && (
                     <div>
                       <h3 className="text-lg font-semibold mb-3 text-purple-400 flex items-center gap-2">
-                        <span>🚀</span>
                         Multi-Line RFQs
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

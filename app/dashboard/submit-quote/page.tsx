@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from '../../utils/schemas/quoteSchemas';
+import Link from 'next/link';
 
 // QuoteFormData type is now imported from schemas
 
@@ -169,19 +170,19 @@ export default function SubmitQuotePage() {
       <Header />
       
       <main className="relative z-10 pt-20 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <button
-              onClick={() => router.back()}
+            <Link
+              href="/dashboard"
               className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back to Dashboard
-            </button>
-            <h1 className="text-4xl font-bold mb-4">Submit New Quote 📝</h1>
+            </Link>
+            <h1 className="text-4xl font-bold mb-4">Submit New Quote</h1>
             <p className="text-gray-400 text-lg">
               Fill out the form below to request a quote for your metal requirements
             </p>
