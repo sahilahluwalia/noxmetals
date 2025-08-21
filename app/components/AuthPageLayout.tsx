@@ -95,7 +95,7 @@ export default function AuthPageLayout({
   subtitle = "Access your secure manufacturing portal" 
 }: AuthPageLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+    <div className="min-h-screen bg-gray-900 text-white relative">
       {/* Industrial Background Pattern */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"></div>
@@ -113,7 +113,7 @@ export default function AuthPageLayout({
       <Header />
 
       {/* Main Content */}
-      <main className="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4 py-8">
+      <main className="relative z-10 flex items-center justify-center min-h-screen pt-20 px-4 py-8">
         <div className="w-full max-w-7xl">
           {/* Security Badge */}
           <div className="flex items-center justify-center mb-8">
