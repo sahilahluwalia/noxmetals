@@ -76,7 +76,7 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Contact Us</h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Ready to get started? Have questions about our services? We're here to help you build the future of manufacturing.
+            Ready to get started? Have questions about our services? We&apos;re here to help you build the future of manufacturing.
           </p>
         </div>
 
@@ -170,13 +170,32 @@ export default function ContactPage() {
           <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 shadow-2xl">
             <h2 className="text-2xl font-semibold mb-6 text-blue-400">Send us a Message</h2>
             
+            {/* Demo Notice */}
+            <div className="mb-6 p-4 bg-blue-600/10 border border-blue-600/30 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="text-sm">
+                  <p className="text-blue-300 font-medium mb-1">Demo Contact Form</p>
+                  <p className="text-blue-200/80">
+                    This is currently a demonstration form. It can be easily connected to a database for real functionality. 
+                    All contact submissions will be viewable in the admin dashboard once database integration is completed.
+                    Additionally, each form submission can be configured to send email notifications to specific addresses for immediate viewing and response.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             {submitStatus === 'success' && (
               <div className="mb-6 p-4 bg-green-600/20 border border-green-600/50 rounded-lg">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-green-400">Message sent successfully! We'll get back to you soon.</span>
+                  <span className="text-green-400">Message sent successfully! We&apos;ll get back to you soon.</span>
                 </div>
               </div>
             )}
