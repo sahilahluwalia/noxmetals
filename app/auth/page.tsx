@@ -66,11 +66,12 @@ export default function AuthPage() {
         setError(error.message);
       } else if (data.user) {
         // Successfully signed in - redirect will happen in useEffect
-        setAuthLoading(false);
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');
-      setAuthLoading(false);
+    }
+    finally{
+      setAuthLoading(false); // Set loading to false regardless of success or error
     }
   };
 

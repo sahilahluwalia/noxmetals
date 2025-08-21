@@ -58,7 +58,7 @@ const DemoUserCard = () => (
             <div className="mb-2"><span className="text-green-300 font-medium">Email:</span></div>
             <div className="text-green-100 mb-3 break-all">iamsahilahluwalia@gmail.com</div>
             <div className="mb-2"><span className="text-green-300 font-medium">Password:</span></div>
-            <div className="text-green-100">123456</div>
+            <div className="text-green-100">12345678</div>
           </div>
           <div className="mt-4 text-xs text-green-300 space-y-1">
             <p>💼 Submit and track RFQ requests</p>
