@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import SlidingCarousel from './components/SlidingCarousel';
-import { supabase } from './utils/supabase/client';
+import { createClient } from './utils/supabase/client';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from './utils/schemas/quoteSchemas';
 
 const customerLogos = [
@@ -111,7 +111,7 @@ export default function Home() {
 
       if (user) {
         // User is logged in - save to their account
-        // Using singleton supabase instance
+        const supabase = createClient();
         const { error } = await supabase
           .from('quotes')
           .insert({
@@ -161,6 +161,7 @@ export default function Home() {
       } else {
         // User is not logged in - submit quote anonymously and encourage login
         // First, submit the quote to the system without a user_id
+        const supabase = createClient();
         const { error } = await supabase
           .from('quotes')
           .insert({

@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../utils/supabase/client';
+import { createClient } from '../utils/supabase/client';
 import { useRouter } from 'next/navigation';
 
 interface UserRole {
@@ -42,25 +42,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const router = useRouter();
-  // Using singleton supabase instance
+
+  // ✅ Create client instance within component, not singleton
+  const supabase = useMemo(() => createClient(), []);
+
+  // ✅ Add role caching to reduce database calls
+  const roleCache = useMemo(() => new Map<string, UserRole>(), []);
 
   const fetchUserRole = useCallback(async (userId: string) => {
+    // Check cache first
+    const cached = roleCache.get(userId);
+    if (cached) {
+      setUserRole(cached);
+      return;
+    }
+
     try {
-      setRoleLoading(true);
-      console.log('Fetching user role for userId:', userId);
       const { data, error } = await supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', userId)
         .single();
-      console.log('User role data:', data);
+      
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        console.error('Error fetching user role:', error);
-        // Set default role as 'user' if no role found
         const defaultRole = {
           id: '',
           user_id: userId,
@@ -69,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updated_at: new Date().toISOString()
         };
         setUserRole(defaultRole);
-        console.log('Set default user role:', defaultRole);
+        roleCache.set(userId, defaultRole);
       } else {
         const role = data || {
           id: '',
@@ -79,10 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updated_at: new Date().toISOString()
         };
         setUserRole(role);
-        console.log('Set user role from database:', role);
+        roleCache.set(userId, role);
       }
     } catch (err) {
-      console.error('Error fetching user role:', err);
+      // Set fallback role without excessive logging in production
       const defaultRole = {
         id: '',
         user_id: userId,
@@ -91,117 +98,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         updated_at: new Date().toISOString()
       };
       setUserRole(defaultRole);
-      console.log('Set fallback user role:', defaultRole);
-    } finally {
-      setRoleLoading(false);
+      roleCache.set(userId, defaultRole);
     }
-  }, []);
-
-  // Add a timeout mechanism to prevent infinite loading in production
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading && !isSigningOut) {
-        console.warn('Auth loading timeout - forcing loading to false. This might indicate a production auth issue.');
-        setLoading(false);
-      }
-    }, 15000); // 15 second timeout for production
-
-    return () => clearTimeout(timeout);
-  }, [loading, isSigningOut]);
+  }, [supabase, roleCache]);
 
   useEffect(() => {
-    // Get initial user with retry logic for production
-    const getInitialUser = async (retryCount = 0) => {
-      const maxRetries = 3;
+    let mounted = true;
+
+    const getInitialUser = async () => {
       try {
-        console.log('Getting initial user... (attempt', retryCount + 1, ')');
+        const { data: { user } } = await supabase.auth.getUser();
         
-        // Add a small delay for production stability
-        if (retryCount > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+        if (!mounted) return;
         
-        const { data: { user }, error } = await supabase.auth.getUser();
-        
-        if (error) {
-          console.error('Error getting user:', error);
-          if (retryCount < maxRetries) {
-            console.log('Retrying auth check...');
-            return getInitialUser(retryCount + 1);
-          }
-        }
-        
-        console.log('Initial user retrieved:', !!user, user?.id);
-
-        setSession(null);
         setUser(user ?? null);
+        setSession(null);
 
         if (user) {
-          console.log('User found, fetching role...');
           await fetchUserRole(user.id);
         } else {
-          console.log('No user found');
           setUserRole(null);
         }
       } catch (error) {
-        console.error('Error getting initial user:', error);
-        if (retryCount < maxRetries) {
-          console.log('Retrying due to error...');
-          return getInitialUser(retryCount + 1);
+        if (mounted) {
+          setUser(null);
+          setUserRole(null);
         }
       } finally {
-        console.log('Initial user loading complete');
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     getInitialUser();
 
-    // Listen for auth changes
+    // ✅ Only listen for relevant auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event) => {
-        // Don't interfere with manual sign out process
-        if (isSigningOut) {
-          console.log('Auth state change ignored during sign out process');
-          return;
-        }
+      async (event, session) => {
+        if (!mounted || isSigningOut) return;
 
-        console.log('Auth state change event:', event);
-        
-        // Only set loading for specific events to prevent infinite loading
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setLoading(true);
-        }
-
-        try {
-          const { data: { user }, error } = await supabase.auth.getUser();
-          
-          if (error) {
-            console.error('Error getting user in auth state change:', error);
-            // Don't update state if there's an error - keep current state
-            return;
+        // ✅ Only fetch role for sign-in events, not token refresh
+        if (event === 'SIGNED_IN') {
+          setUser(session?.user ?? null);
+          setSession(session);
+          if (session?.user) {
+            await fetchUserRole(session.user.id);
           }
-          
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
           setSession(null);
-          setUser(user ?? null);
-
-          if (user) {
-            await fetchUserRole(user.id);
-          } else {
-            setUserRole(null);
-          }
-        } catch (error) {
-          console.error('Error handling auth state change:', error);
-        } finally {
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-            setLoading(false);
-          }
+          setUserRole(null);
+          // Clear role cache on sign out
+          roleCache.clear();
+        } else if (event === 'TOKEN_REFRESHED') {
+          // ✅ Just update session, don't refetch role
+          setSession(session);
+          setUser(session?.user ?? null);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [fetchUserRole, isSigningOut]);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchUserRole, isSigningOut, supabase, roleCache]);
 
   const signOut = async () => {
     try {
@@ -260,9 +222,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = userRole?.role === 'admin' || userRole?.role === 'super_admin';
   const isSuperAdmin = userRole?.role === 'super_admin';
 
-  // Combine loading states: still loading if either session or role is loading
-  // But not during sign out process (we handle loading manually there)
-  const isLoading = isSigningOut ? false : (loading || roleLoading);
+  // ✅ Simplified loading state without roleLoading
+  const isLoading = isSigningOut ? false : loading;
 
   const value = {
     user,

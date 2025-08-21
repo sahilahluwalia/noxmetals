@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../utils/supabase/client';
+import { createClient } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from '../../utils/schemas/quoteSchemas';
 import Link from 'next/link';
@@ -94,7 +94,7 @@ export default function SubmitQuotePage() {
 
       const validatedData = validationResult.data;
       
-      // Using singleton supabase instance
+      const supabase = createClient();
       const { error } = await supabase
         .from('quotes')
         .insert({

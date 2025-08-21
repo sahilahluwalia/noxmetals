@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Header from '../components/Header';
-import { supabase } from '../utils/supabase/client';
+import { createClient } from '../utils/supabase/client';
 import Link from 'next/link';
 
 interface QuoteStats {
@@ -51,7 +51,7 @@ export default function DashboardPage() {
     
     setStatsLoading(true);
     try {
-      // Using singleton supabase instance
+      const supabase = createClient();
       
       // Get quote statistics
       const { data: quotes, error: quotesError } = await supabase

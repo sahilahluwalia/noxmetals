@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../utils/supabase/client';
+import { createClient } from '../utils/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 import AuthPageLayout, { SocialLoginButtons } from '../components/AuthPageLayout';
 
@@ -57,6 +57,7 @@ export default function AuthPage() {
     setAuthLoading(true);
     
     try {
+      const supabase = createClient();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -80,6 +81,7 @@ export default function AuthPage() {
     setError(null);
     
     try {
+      const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider.toLowerCase() as 'google' | 'github' | 'linkedin',
         options: {

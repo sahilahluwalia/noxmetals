@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../utils/supabase/client';
+import { createClient } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 
 interface MultilineRFQItem {
@@ -53,6 +53,7 @@ export default function RFQHistoryPage() {
     try {
       setLoadingRfqs(true);
       setError(null);
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .from('multiline_rfqs')
@@ -79,6 +80,7 @@ export default function RFQHistoryPage() {
   const fetchRFQDetails = useCallback(async (rfqId: string) => {
     try {
       setLoadingDetails(true);
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .rpc('get_multiline_rfq_with_items', { rfq_uuid: rfqId });
