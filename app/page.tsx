@@ -225,8 +225,102 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gray-800">
-          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/90 to-gray-900/60"></div>
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-slate-800 to-zinc-900/60">
+          {/* Industrial gradient overlay with metallic tones */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-600/20 via-zinc-500/15 to-gray-600/20 animate-gradient-shift"></div>
+          
+          {/* Industrial Manufacturing Elements */}
+          <div className="absolute inset-0">
+            {/* Metal Sheet Representations */}
+            <div className="absolute top-20 left-10 w-48 h-32 sm:w-64 sm:h-40 lg:w-96 lg:h-48 bg-gradient-to-r from-slate-400/20 to-blue-400/15 transform rotate-12 animate-pulse border border-slate-500/10"></div>
+            <div className="absolute top-40 right-20 w-40 h-60 sm:w-56 sm:h-80 lg:w-72 lg:h-96 bg-gradient-to-b from-zinc-400/15 to-slate-400/20 transform -rotate-6 animate-pulse delay-1000 border border-zinc-500/10"></div>
+            <div className="absolute bottom-20 left-1/3 w-56 h-28 sm:w-72 sm:h-36 lg:w-88 lg:h-44 bg-gradient-to-r from-gray-400/25 to-slate-300/15 transform rotate-3 animate-pulse delay-2000 border border-gray-500/15"></div>
+            
+            {/* Industrial Hexagon Pattern */}
+            <div className="absolute top-32 right-1/4 w-8 h-8 sm:w-12 sm:h-12 bg-orange-400/40 transform rotate-45 animate-bounce delay-500" style={{clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)'}}></div>
+            <div className="absolute top-64 left-1/4 w-6 h-6 sm:w-8 sm:h-8 bg-yellow-400/50 transform rotate-12 animate-bounce delay-700" style={{clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)'}}></div>
+            <div className="absolute bottom-1/3 right-1/3 w-10 h-10 sm:w-14 sm:h-14 bg-amber-400/35 transform -rotate-12 animate-bounce delay-1200" style={{clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)'}}></div>
+            
+            {/* Metal Bars and Industrial Elements */}
+            <div className="absolute top-1/2 left-16 w-20 h-4 sm:w-28 sm:h-6 bg-gradient-to-r from-steel-400/30 to-slate-400/40 animate-spin-slow shadow-xl shadow-slate-500/20" style={{backgroundColor: '#71717a'}}></div>
+            <div className="absolute top-3/4 right-12 w-4 h-28 sm:w-6 sm:h-36 bg-gradient-to-b from-zinc-400/40 to-gray-400/25 transform -rotate-12 animate-float delay-1500"></div>
+            <div className="absolute top-16 left-3/4 w-3 h-20 bg-gradient-to-t from-orange-500/35 to-transparent animate-float delay-2500"></div>
+            <div className="absolute bottom-32 right-16 w-16 h-3 bg-gradient-to-r from-amber-500/30 to-transparent animate-float delay-3000"></div>
+            
+            {/* Circuit Board / Technical Drawing Lines */}
+            <div className="absolute top-24 left-1/2 w-32 h-px bg-blue-400/40 animate-pulse delay-800"></div>
+            <div className="absolute top-56 right-1/3 w-px h-24 bg-orange-400/40 animate-pulse delay-1300"></div>
+            <div className="absolute bottom-40 left-1/4 w-20 h-px bg-yellow-400/40 animate-pulse delay-1800"></div>
+            
+            {/* Technical Blueprint Grid */}
+            <div className="absolute inset-0 opacity-12" style={{
+              backgroundImage: `
+                linear-gradient(rgba(14, 165, 233, 0.25) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(14, 165, 233, 0.25) 1px, transparent 1px),
+                linear-gradient(rgba(249, 115, 22, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(249, 115, 22, 0.15) 1px, transparent 1px)
+              `,
+              backgroundSize: '20px 20px, 20px 20px, 80px 80px, 80px 80px'
+            }}></div>
+            
+            {/* Industrial Honeycomb Pattern */}
+            <div className="absolute inset-0 opacity-8" style={{
+              backgroundImage: `radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.15) 2px, transparent 2px)`,
+              backgroundSize: '30px 26px'
+            }}></div>
+            
+            {/* Manufacturing Equipment Silhouettes */}
+            <div className="absolute top-12 right-12 w-6 h-6 sm:w-10 sm:h-10 bg-orange-400/25 animate-spin-slow" style={{
+              clipPath: 'polygon(0% 20%, 60% 20%, 60% 0%, 100% 50%, 60% 100%, 60% 80%, 0% 80%)'
+            }}></div>
+            
+            {/* Gear Elements */}
+            <div className="absolute bottom-16 left-20 w-8 h-8 sm:w-12 sm:h-12 bg-amber-400/30 animate-gear" style={{
+              clipPath: 'polygon(50% 0%, 63% 38%, 100% 38%, 69% 59%, 82% 100%, 50% 75%, 18% 100%, 31% 59%, 0% 38%, 37% 38%)'
+            }}></div>
+            
+            {/* Industrial Pipe Elements */}
+            <div className="absolute top-48 left-8 w-2 h-24 sm:w-3 sm:h-32 bg-zinc-400/35 rounded-full animate-float delay-2200" style={{
+              boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.3), inset -2px 0 4px rgba(255,255,255,0.1)'
+            }}></div>
+            <div className="absolute bottom-48 right-8 w-20 h-2 sm:w-28 sm:h-3 bg-slate-400/40 rounded-full animate-float delay-2800" style={{
+              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), inset 0 -2px 4px rgba(255,255,255,0.1)'
+            }}></div>
+            
+            {/* Metal Cutting Path Lines */}
+            <div className="absolute top-36 right-1/2 w-24 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent animate-pulse delay-400"></div>
+            <div className="absolute top-72 left-1/3 w-px h-16 bg-gradient-to-b from-transparent via-red-400/50 to-transparent animate-pulse delay-1600"></div>
+            
+            {/* Steel Plate Texture Overlay */}
+            <div className="absolute inset-0 opacity-5" style={{
+              backgroundImage: `
+                repeating-linear-gradient(
+                  45deg,
+                  rgba(148, 163, 184, 0.1),
+                  rgba(148, 163, 184, 0.1) 2px,
+                  transparent 2px,
+                  transparent 10px
+                ),
+                repeating-linear-gradient(
+                  -45deg,
+                  rgba(148, 163, 184, 0.05),
+                  rgba(148, 163, 184, 0.05) 2px,
+                  transparent 2px,
+                  transparent 10px
+                )
+              `
+            }}></div>
+            
+            {/* Industrial Corner Brackets */}
+            <div className="absolute top-8 left-8 w-12 h-12 border-l-2 border-t-2 border-orange-400/30"></div>
+            <div className="absolute top-8 right-8 w-12 h-12 border-r-2 border-t-2 border-blue-400/30"></div>
+            <div className="absolute bottom-8 left-8 w-12 h-12 border-l-2 border-b-2 border-amber-400/30"></div>
+            <div className="absolute bottom-8 right-8 w-12 h-12 border-r-2 border-b-2 border-sky-400/30"></div>
+          </div>
+          
+          {/* Reduced overlay for better visibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/85 via-gray-900/60 to-gray-900/75"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -659,7 +753,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <SlidingCarousel 
             items={customerLogos}
-            title="Trusted by modern manufacturers"
+            imageSize={100}
+            // title="Trusted by modern manufacturers"
             speed={20}
           />
         </div>
@@ -675,7 +770,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-stretch">
             {[
               {
                 title: "5000 Series Aluminum",
@@ -708,12 +803,14 @@ export default function Home() {
                 sizes: "Up to 144.5\" × 60.5\" or smaller"
               }
             ].map((material, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors h-full flex flex-col">
                 <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
                 <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
                 <p className="text-sm text-gray-300 mb-4">{material.description}</p>
                 
-                <div className="mb-4">
+                <p className="text-xs text-gray-500 mb-4">{material.sizes}</p>
+                
+                <div className="mt-auto">
                   <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
@@ -722,15 +819,13 @@ export default function Home() {
                     <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
                   </div>
                 </div>
-                
-                <p className="text-xs text-gray-500">{material.sizes}</p>
               </div>
             ))}
           </div>
 
           <div className="text-center mt-12">
             <button className="bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded-lg border border-gray-600 transition-colors">
-              🔜 More materials coming soon
+              More materials coming soon
             </button>
           </div>
         </div>
@@ -739,133 +834,143 @@ export default function Home() {
       {/* Why Nox Metals */}
       <section className="py-24 bg-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Nox Metals</h2>
-            <p className="text-xl text-gray-300">
-              Speed, cost, and software-first visibility for machinists.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⚡</span>
+          <div className="bg-gray-900 border border-gray-700 px-6 sm:px-10 py-10">
+            <div className="md:flex md:items-start md:justify-between mb-10">
+              <div>
+                <h2 className="text-3xl font-semibold tracking-tight">Why Nox Metals</h2>
+                <p className="mt-2 text-gray-300 max-w-3xl">
+                  A dependable metals partner for procurement teams and machine shops. We focus on
+                  predictable delivery, traceable paperwork, and attentive customer service.
+                </p>
               </div>
-              <h3 className="text-xl font-semibold mb-3">Speed</h3>
-              <p className="text-gray-300">
-                Quote fast. Cut, pack, and ship quickly with software-paced ops.
-              </p>
+              <div className="mt-6 md:mt-0 text-sm text-gray-400">
+                <p>Serving aerospace, defense, medical, automotive</p>
+              </div>
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💰</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Cost</h3>
-              <p className="text-gray-300">
-                Optimized nesting + routing to lower landed costs without surprises.
-              </p>
+            <div className="grid md:grid-cols-2 gap-10">
+              <ul className="space-y-4">
+                <li className="flex">
+                  <span className="text-blue-400 mr-3">✔</span>
+                  <div>
+                    <p className="font-medium">Same‑day quoting</p>
+                    <p className="text-sm text-gray-400">Firm pricing and clear lead times.</p>
+                  </div>
+                </li>
+                <li className="flex">
+                  <span className="text-blue-400 mr-3">✔</span>
+                  <div>
+                    <p className="font-medium">Competitive landed cost</p>
+                    <p className="text-sm text-gray-400">Optimized nesting, routing, and sourcing.</p>
+                  </div>
+                </li>
+                <li className="flex">
+                  <span className="text-blue-400 mr-3">✔</span>
+                  <div>
+                    <p className="font-medium">DFARS compliant paperwork</p>
+                    <p className="text-sm text-gray-400">Full traceability and mill certs on file.</p>
+                  </div>
+                </li>
+              </ul>
+
+              
             </div>
 
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">📱</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Software</h3>
-              <p className="text-gray-300">
-                End-to-end visibility—orders, certs, paperwork—in one portal with AI assist.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Operational Advantages */}
-      <section className="py-24 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl">🚀</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Same‑day quotes</h3>
-              <p className="text-sm text-gray-400">Instant pricing + lead times.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl">📊</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Lower landed cost</h3>
-              <p className="text-sm text-gray-400">Optimized nesting + sourcing.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl">✅</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">DFARS compliant</h3>
-              <p className="text-sm text-gray-400">Traceability and certs on file.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl">🚚</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Nationwide shipping</h3>
-              <p className="text-sm text-gray-400">Fast dispatch, insured freight.</p>
-            </div>
           </div>
         </div>
       </section>
+
+      
 
       {/* CTA Section */}
-      <section className="py-24 bg-blue-600">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold mb-4">Ready to move faster?</h2>
-          <p className="text-xl mb-8 text-blue-100">
-            Send dimensions today. We&apos;ll reply with price + lead time and set you up in the portal.
-          </p>
+      <section className="relative py-24 bg-gradient-to-br from-gray-900 via-slate-800 to-zinc-900 overflow-hidden">
+        {/* Industrial Background Elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-10 w-32 h-20 bg-gradient-to-r from-orange-400/10 to-amber-400/15 transform rotate-12 animate-pulse"></div>
+          <div className="absolute bottom-16 right-16 w-24 h-36 bg-gradient-to-b from-blue-400/10 to-slate-400/15 transform -rotate-6 animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/4 w-4 h-4 bg-orange-400/40 transform rotate-45 animate-bounce delay-500" style={{clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)'}}></div>
+          <div className="absolute bottom-1/3 right-1/3 w-6 h-6 bg-amber-400/35 transform -rotate-12 animate-bounce delay-1200" style={{clipPath: 'polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%)'}}></div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth' })}
-              className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer"
-            >
-              Start a quote
-            </button>
-            <a href="mailto:zane@noxmetals.co?subject=Quote Inquiry&body=Hi Zane,%0A%0AI'm interested in getting a quote for:" className="border border-blue-200 hover:border-white hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors inline-block text-center">
-              Email us
-            </a>
+          {/* Technical Grid */}
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: `
+              linear-gradient(rgba(14, 165, 233, 0.3) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(14, 165, 233, 0.3) 1px, transparent 1px)
+            `,
+            backgroundSize: '40px 40px'
+          }}></div>
+        </div>
+
+        <div className="relative max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-md p-8 sm:p-12 shadow-2xl">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6 bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+              Ready to move faster?
+            </h2>
+            <p className="text-lg sm:text-xl mb-8 text-gray-300 leading-relaxed max-w-2xl mx-auto">
+              Send dimensions today. We&apos;ll reply with price + lead time and set you up in the portal.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button 
+                onClick={() => document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth' })}
+                className="group relative bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-orange-500/25 cursor-pointer w-full sm:w-auto"
+              >
+                <span className="relative z-10">Start a quote</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+              
+              <a 
+                href="mailto:zane@noxmetals.co?subject=Quote Inquiry&body=Hi Zane,%0A%0AI'm interested in getting a quote for:" 
+                className="group relative border-2 border-gray-600 hover:border-blue-400 text-gray-300 hover:text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-blue-400/25 inline-block text-center w-full sm:w-auto"
+              >
+                <span className="relative z-10">Email us</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-slate-600/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </a>
+            </div>
+
+            {/* Industrial accent elements */}
+            <div className="flex justify-center items-center mt-8 space-x-8 opacity-30">
+              <div className="w-8 h-1 bg-gradient-to-r from-orange-400 to-amber-400 rounded-full"></div>
+              <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+              <div className="w-8 h-1 bg-gradient-to-r from-blue-400 to-slate-400 rounded-full"></div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Mission Section */}
       <section id="mission" className="py-24 bg-gray-900">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-5">
-            <h2 className="text-4xl font-bold mb-8">Our mission</h2>
-            <p className="text-xl leading-relaxed text-gray-300">
-              Nox Metals exists to reindustrialize America by rebuilding the nation&apos;s 
-              industrial supply chain from the ground up. We are creating the modern metals 
-              supplier that is fast, software driven, and built to arm the factories that 
-              power our economy. By delivering certified domestic metal at unprecedented 
-              speed and scale, we strengthen the industrial base and give American 
-              manufacturing the tools to win.
-            </p>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-white">Our Mission </h2>
+            <div className="max-w-4xl mx-auto bg-slate-800/60 backdrop-blur-sm border border-slate-700/50 rounded-md p-8 sm:p-12 shadow-2xl">
+              <p className="text-xl sm:text-2xl leading-relaxed text-gray-200 font-light">
+                Nox Metals exists to <span className="text-white font-semibold">reindustrialize America</span> by rebuilding the nation&apos;s 
+                industrial supply chain from the ground up. We are creating the modern metals 
+                supplier that is <span className="text-blue-400 font-medium">fast, software driven, and built to scale</span>  
+                arming the factories that power our economy with certified domestic metal 
+                at unprecedented speed.
+              </p>
+              
+              <div className="mt-8 pt-6 border-t border-slate-700/50">
+                <p className="text-lg text-slate-300 font-medium">
+                  Strengthening America&apos;s industrial base. One delivery at a time.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Sliding Carousel */}
-          <SlidingCarousel 
-            items={partnerLogos}
-            title=""
-            speed={30}
-            imageSize={200}
-            spacing="mx-8"
-            opacity="opacity-40"
-          />
-            
+          <div className="mt-16">
+            <SlidingCarousel 
+              items={partnerLogos}
+              title=""
+              speed={30}
+              imageSize={250}
+              spacing="mx-8"
+              opacity="opacity-50"
+            />
+          </div>
         </div>
       </section>
 
@@ -902,7 +1007,7 @@ export default function Home() {
               </p>
               
               <div className="flex items-center space-x-2">
-                <span className="text-gray-500 text-sm">💻</span>
+                <span className="text-gray-500 text-sm"></span>
                 <a 
                   href="https://github.com/sahilahluwalia/noxmetals" 
                   target="_blank" 

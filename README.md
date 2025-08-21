@@ -28,6 +28,8 @@ This project serves as a proof-of-concept and rapid prototype to validate featur
 - **Backend**: Supabase
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
+- **Email**: Resend
+- **Form Validatation**: Zod
 
 ## 🚀 Quick Setup
 
