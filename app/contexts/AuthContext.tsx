@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 interface UserRole {
   id: string;
@@ -43,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roleLoading, setRoleLoading] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const router = useRouter();
   // Using singleton supabase instance
 
   const fetchUserRole = useCallback(async (userId: string) => {
@@ -94,17 +97,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Add a timeout mechanism to prevent infinite loading
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn('Auth loading timeout - forcing loading to false');
-        setLoading(false);
-      }
-    }, 10000); // 10 second timeout
+  // // Add a timeout mechanism to prevent infinite loading
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     if (loading) {
+  //       console.warn('Auth loading timeout - forcing loading to false');
+  //       setLoading(false);
+  //     }
+  //   }, 10000); // 10 second timeout
 
-    return () => clearTimeout(timeout);
-  }, [loading]);
+  //   return () => clearTimeout(timeout);
+  // }, [loading]);
 
   useEffect(() => {
     // Get initial user
@@ -136,8 +139,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async () => {
+      async (event) => {
+        // Don't interfere with manual sign out process
+        if (isSigningOut) {
+          console.log('Auth state change ignored during sign out process');
+          return;
+        }
+
         setLoading(true); // Set loading while processing auth change
+        console.log('Auth state change event:', event);
 
         try {
           const { data: { user } } = await supabase.auth.getUser();
@@ -158,11 +168,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [fetchUserRole]);
+  }, [fetchUserRole, isSigningOut]);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUserRole(null);
+    try {
+      setIsSigningOut(true);
+      console.log('Starting sign out...');
+      
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Sign out error:', error);
+        setIsSigningOut(false);
+        return;
+      }
+      
+      // Clear local state immediately
+      setUserRole(null);
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      
+      console.log('Sign out successful, redirecting to auth page...');
+      // Navigate to auth page
+      router.push('/auth');
+      
+      // Reset sign out flag after a short delay to allow navigation
+      setTimeout(() => {
+        setIsSigningOut(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Unexpected error during sign out:', error);
+      setIsSigningOut(false);
+    }
   };
 
   const updateUser = async (attributes: { data: UpdateUserData }): Promise<UpdateUserResponse> => {
@@ -191,7 +228,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = userRole?.role === 'super_admin';
 
   // Combine loading states: still loading if either session or role is loading
-  const isLoading = loading || roleLoading;
+  // But not during sign out process (we handle loading manually there)
+  const isLoading = isSigningOut ? false : (loading || roleLoading);
 
   const value = {
     user,

@@ -11,13 +11,13 @@ export default function Header() {
   const pathname = usePathname();
   const { user, loading, signOut, isAdmin, userRole } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   const isAuthPage = pathname === '/auth' || pathname === '/signup';
   const isAdminPage = pathname.startsWith('/admin');
 
   const handleSignOut = async () => {
     await signOut();
     setAccountDropdownOpen(false);
+    // Navigation is now handled by the AuthContext
   };
 
   // Close dropdown when clicking outside
