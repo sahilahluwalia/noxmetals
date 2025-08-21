@@ -33,6 +33,7 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<QuoteFormErrors | null>(null);
+  const [showMultilineMessage, setShowMultilineMessage] = useState(false);
 
   const [formData, setFormData] = useState<QuoteFormData>({
     fullName: '',
@@ -297,12 +298,25 @@ export default function Home() {
             <div id="quote" className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Quick quote</h3>
-                <button
-                  onClick={() => window.location.href = '/dashboard/multiline-rfq'}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors cursor-pointer underline"
-                >
-                  Multi-line RFQ
-                </button>
+                {user ? (
+                  <button
+                    onClick={() => window.location.href = '/dashboard/multiline-rfq'}
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
+                  >
+                    📋 Multi-line RFQ
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowMultilineMessage(true);
+                      setTimeout(() => window.location.href = '/auth', 5000);
+                    }}
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
+                    title="Login to access Multi-line RFQ"
+                  >
+                    📋 Multi-line RFQ
+                  </button>
+                )}
               </div>
               
               {user ? (
@@ -339,6 +353,29 @@ export default function Home() {
                       <li key={index}>{error}</li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Multi-line RFQ Access Message */}
+              {showMultilineMessage && (
+                <div className="bg-orange-900/20 border border-orange-700/30 rounded-xl p-6 shadow-xl mb-6">
+                  <div className="flex items-start">
+                    <div className="flex-shrink-0">
+                      <svg className="w-6 h-6 text-orange-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-lg font-semibold text-orange-300 mb-3">Multi-line RFQ Access</h3>
+                      <div className="text-sm text-orange-200">
+                        <p className="mb-3">🔒 This feature requires authentication to access.</p>
+                        <div className="mt-4 text-xs text-orange-300">
+                          <p>⏱️ Redirecting to login page in 5 seconds...</p>
+                          <p>💡 <strong>P.S:</strong> Like this feature? <em>Hire me :)</em> 🚀</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -671,26 +708,22 @@ export default function Home() {
                 sizes: "Up to 144.5\" × 60.5\" or smaller"
               }
             ].map((material, index) => (
-              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors flex flex-col h-full">
-                <div className="flex-grow">
-                  <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
-                  <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
-                  <p className="text-sm text-gray-300 mb-4">{material.description}</p>
+              <div key={index} className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-gray-600 transition-colors">
+                <h3 className="text-lg font-semibold mb-2">{material.title}</h3>
+                <p className="text-sm text-gray-400 mb-3">{material.subtitle}</p>
+                <p className="text-sm text-gray-300 mb-4">{material.description}</p>
+                
+                <div className="mb-4">
+                  <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Bar</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Round</span>
+                    <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
+                  </div>
                 </div>
                 
-                <div className="mt-auto">
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 mb-2">AVAILABLE FORMS</p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Plate</span>
-                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Bar</span>
-                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Round</span>
-                      <span className="bg-gray-700 px-2 py-1 rounded text-center">Block</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500">{material.sizes}</p>
-                </div>
+                <p className="text-xs text-gray-500">{material.sizes}</p>
               </div>
             ))}
           </div>
