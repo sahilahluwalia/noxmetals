@@ -125,3 +125,4 @@ Both email templates are fully responsive and optimized for:
 - Input validation prevents malicious email content
 - Rate limiting should be added for production use
 
+
