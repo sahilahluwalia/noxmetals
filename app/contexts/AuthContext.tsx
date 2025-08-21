@@ -107,44 +107,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loading]);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+    // Get initial user
+    const getInitialUser = async () => {
       try {
-        console.log('Getting initial session...');
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session retrieved:', !!session, session?.user?.id);
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
+        console.log('Getting initial user...');
+        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Initial user retrieved:', !!user, user?.id);
+
+        setSession(null);
+        setUser(user ?? null);
+
+        if (user) {
           console.log('User found, fetching role...');
-          await fetchUserRole(session.user.id);
+          await fetchUserRole(user.id);
         } else {
-          console.log('No user found in session');
+          console.log('No user found');
           setUserRole(null);
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
+        console.error('Error getting initial user:', error);
       } finally {
-        console.log('Initial session loading complete');
+        console.log('Initial user loading complete');
         setLoading(false);
       }
     };
 
-    getInitialSession();
+    getInitialUser();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async () => {
         setLoading(true); // Set loading while processing auth change
-        
+
         try {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            await fetchUserRole(session.user.id);
+          const { data: { user } } = await supabase.auth.getUser();
+          setSession(null);
+          setUser(user ?? null);
+
+          if (user) {
+            await fetchUserRole(user.id);
           } else {
             setUserRole(null);
           }

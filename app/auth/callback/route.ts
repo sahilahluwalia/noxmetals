@@ -17,20 +17,19 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-      // Successfully exchanged code for session
-      // Check user role to determine redirect destination
+      // Successfully exchanged code, check user and role
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user) {
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
           const { data: roleData, error: roleError } = await supabase
             .from('user_roles')
             .select('role')
-            .eq('user_id', session.user.id)
+            .eq('user_id', user.id)
             .single();
 
           const userRole = roleData?.role || 'user';
-          
+
           if (userRole === 'admin' || userRole === 'super_admin') {
             next = '/admin/dashboard';
           } else {
