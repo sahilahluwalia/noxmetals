@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../utils/supabase/client';
+import { createClient } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 import { QuotesArraySchema, QuoteSchema, type Quote } from '../../utils/schemas/quoteSchemas';
 import Link from 'next/link';
@@ -28,7 +28,7 @@ export default function QuotesPage() {
       setError(null);
       setValidationErrors([]);
       
-      // Using singleton supabase instance
+      const supabase = createClient();
       const { data, error } = await supabase
         .from('quotes')
         .select('*')

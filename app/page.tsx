@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import SlidingCarousel from './components/SlidingCarousel';
-import { supabase } from './utils/supabase/client';
+import { createClient } from './utils/supabase/client';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from './utils/schemas/quoteSchemas';
 
 const customerLogos = [

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { supabase } from '../../utils/supabase/client';
+import { createClient } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 
 interface AdminQuote {

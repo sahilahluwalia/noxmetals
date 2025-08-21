@@ -2,14 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const supabaseResponse = NextResponse.next({ request });
 
+  // ✅ Skip auth check for static files and API routes  
+  const isStaticFile = request.nextUrl.pathname.match(/\.(ico|png|jpg|jpeg|gif|svg|webp|js|css|woff|woff2|ttf|otf)$/);
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
   
+  if (isStaticFile || isApiRoute) {
+    return supabaseResponse;
+  }
 
-  // With Fluid compute, don't put this client in a global environment
-  // variable. Always create a new one on each request.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
@@ -22,9 +24,6 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -33,14 +32,8 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
-  // IMPORTANT: If you remove getClaims() and you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // ✅ Use getUser() instead of getClaims() for better performance
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Only redirect to auth if user is accessing protected routes without authentication
   // Allow public routes and don't interfere with auth refresh process
@@ -58,7 +51,6 @@ export async function updateSession(request: NextRequest) {
 
   // Only redirect unauthenticated users from protected routes
   if (isProtectedRoute && !user) {
-    console.log('Redirecting unauthenticated user from protected route:', request.nextUrl.pathname);
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
     return NextResponse.redirect(url);
