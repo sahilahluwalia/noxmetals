@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
+import Link from 'next/link';
 
 export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
@@ -122,15 +123,15 @@ export default function ProfilePage() {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <button
-              onClick={() => router.back()}
+            <Link
+              href="/dashboard"
               className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back to Dashboard
-            </button>
+            </Link>
             <h1 className="text-4xl font-bold mb-4">Profile Settings</h1>
             <p className="text-gray-400 text-lg">Manage your account information</p>
           </div>

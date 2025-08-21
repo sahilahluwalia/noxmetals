@@ -6,6 +6,8 @@ import Header from './components/Header';
 import SlidingCarousel from './components/SlidingCarousel';
 import { createClient } from './utils/supabase/client';
 import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from './utils/schemas/quoteSchemas';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const customerLogos = [
   '/clients/1.png',
@@ -220,6 +222,7 @@ export default function Home() {
     }
   };
 
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Header Navigation */}
@@ -342,35 +345,35 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 {user ? (
-                  <button 
-                    onClick={() => window.location.href = '/dashboard/submit-quote'}
-                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
+                  <Link 
+                    href="/dashboard/submit-quote"
+                    className="bg-blue-600 cursor-pointer hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
                   >
                     Submit Quote
-                  </button>
+                  </Link>
                 ) : (
-                  <button 
-                    onClick={() => document.getElementById('quote')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors cursor-pointer"
+                  <Link 
+                    href="/dashboard/submit-quote"
+                    className="bg-blue-600 cursor-pointer hover:bg-blue-700 px-8 py-3 rounded-lg font-medium transition-colors"
                   >
                     Start a quote
-                  </button>
+                  </Link>
                 )}
                 {!user && (
-                  <button 
-                    onClick={() => window.location.href = '/signup'}
-                    className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
+                  <Link 
+                    href="/signup"
+                    className="border border-gray-600 cursor-pointer hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
                   >
                     Create account
-                  </button>
+                  </Link>
                 )}
                 {user && (
-                  <button 
-                    onClick={() => window.location.href = '/dashboard'}
-                    className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
+                  <Link 
+                    href="/dashboard"
+                    className="border border-gray-600 cursor-pointer hover:border-gray-500 px-8 py-3 rounded-lg font-medium transition-colors"
                   >
                     Go to Dashboard
-                  </button>
+                  </Link>
                 )}
               </div>
 
@@ -396,7 +399,7 @@ export default function Home() {
                 <h3 className="text-lg font-semibold">Quick quote</h3>
                 {user ? (
                   <button
-                    onClick={() => window.location.href = '/dashboard/multiline-rfq'}
+                    onClick={() => router.push('/dashboard/multiline-rfq')}
                     className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
                   >
                     📋 Multi-line RFQ
@@ -405,7 +408,7 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setShowMultilineMessage(true);
-                      setTimeout(() => window.location.href = '/auth', 5000);
+                      setTimeout(() => router.push('/auth'), 3000);
                     }}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center gap-2"
                     title="Login to access Multi-line RFQ"
