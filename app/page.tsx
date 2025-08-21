@@ -35,6 +35,7 @@ export default function Home() {
   const [validationErrors, setValidationErrors] = useState<QuoteFormErrors | null>(null);
   const [showMultilineMessage, setShowMultilineMessage] = useState(false);
 
+  console.log('Supabase Auth is Pain, I am not good at this auth, so currently it is bit buggy, please ignore some minor issues related to auth, i hope you will agree with this, i use to think nextauth is pain, but bro this is more, have to study it properly');
   const [formData, setFormData] = useState<QuoteFormData>({
     fullName: '',
     company: '',
