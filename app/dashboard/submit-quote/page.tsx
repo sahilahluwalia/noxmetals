@@ -94,7 +94,7 @@ export default function SubmitQuotePage() {
 
       const validatedData = validationResult.data;
       
-      // Using singleton supabase instance
+      const supabase = createClient();
       const { error } = await supabase
         .from('quotes')
         .insert({

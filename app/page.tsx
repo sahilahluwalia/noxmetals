@@ -111,7 +111,7 @@ export default function Home() {
 
       if (user) {
         // User is logged in - save to their account
-        // Using singleton supabase instance
+        const supabase = createClient();
         const { error } = await supabase
           .from('quotes')
           .insert({
@@ -161,6 +161,7 @@ export default function Home() {
       } else {
         // User is not logged in - submit quote anonymously and encourage login
         // First, submit the quote to the system without a user_id
+        const supabase = createClient();
         const { error } = await supabase
           .from('quotes')
           .insert({

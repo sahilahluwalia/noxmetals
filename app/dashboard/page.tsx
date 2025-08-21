@@ -51,7 +51,7 @@ export default function DashboardPage() {
     
     setStatsLoading(true);
     try {
-      // Using singleton supabase instance
+      const supabase = createClient();
       
       // Get quote statistics
       const { data: quotes, error: quotesError } = await supabase

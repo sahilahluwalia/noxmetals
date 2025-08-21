@@ -53,6 +53,7 @@ export default function RFQHistoryPage() {
     try {
       setLoadingRfqs(true);
       setError(null);
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .from('multiline_rfqs')
@@ -79,6 +80,7 @@ export default function RFQHistoryPage() {
   const fetchRFQDetails = useCallback(async (rfqId: string) => {
     try {
       setLoadingDetails(true);
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .rpc('get_multiline_rfq_with_items', { rfq_uuid: rfqId });

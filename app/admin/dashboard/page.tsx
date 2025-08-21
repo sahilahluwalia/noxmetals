@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
     
     try {
       setLoadingQuotes(true);
-      // Using singleton supabase instance
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .from('admin_quotes_view')
@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
     if (!user || !isAdmin) return;
     
     try {
-      // Using singleton supabase instance
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .rpc('get_admin_dashboard_stats');
@@ -189,6 +189,7 @@ export default function AdminDashboardPage() {
     
     try {
       setLoadingMultilineRfqs(true);
+      const supabase = createClient();
       
       const { data, error } = await supabase
         .from('admin_multiline_rfqs_view')
@@ -296,7 +297,7 @@ export default function AdminDashboardPage() {
     
     try {
       setUpdatingQuote(quoteId);
-      // Using singleton supabase instance
+      const supabase = createClient();
       
       const { error } = await supabase
         .from('quotes')
@@ -442,6 +443,7 @@ export default function AdminDashboardPage() {
   const handleUpdateMultilineRfqStatus = async (rfqId: string, newStatus: string) => {
     try {
       setUpdatingMultilineRfq(rfqId);
+      const supabase = createClient();
       
       const { error } = await supabase
         .from('multiline_rfqs')
@@ -488,6 +490,7 @@ export default function AdminDashboardPage() {
     
     try {
       // Fetch detailed RFQ with items using the database function
+      const supabase = createClient();
       const { data, error } = await supabase
         .rpc('get_multiline_rfq_with_items', { rfq_uuid: rfq.id });
 
