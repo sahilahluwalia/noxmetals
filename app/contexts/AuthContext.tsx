@@ -97,24 +97,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // // Add a timeout mechanism to prevent infinite loading
-  // useEffect(() => {
-  //   const timeout = setTimeout(() => {
-  //     if (loading) {
-  //       console.warn('Auth loading timeout - forcing loading to false');
-  //       setLoading(false);
-  //     }
-  //   }, 10000); // 10 second timeout
+  // Add a timeout mechanism to prevent infinite loading in production
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading && !isSigningOut) {
+        console.warn('Auth loading timeout - forcing loading to false. This might indicate a production auth issue.');
+        setLoading(false);
+      }
+    }, 15000); // 15 second timeout for production
 
-  //   return () => clearTimeout(timeout);
-  // }, [loading]);
+    return () => clearTimeout(timeout);
+  }, [loading, isSigningOut]);
 
   useEffect(() => {
-    // Get initial user
-    const getInitialUser = async () => {
+    // Get initial user with retry logic for production
+    const getInitialUser = async (retryCount = 0) => {
+      const maxRetries = 3;
       try {
-        console.log('Getting initial user...');
-        const { data: { user } } = await supabase.auth.getUser();
+        console.log('Getting initial user... (attempt', retryCount + 1, ')');
+        
+        // Add a small delay for production stability
+        if (retryCount > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error) {
+          console.error('Error getting user:', error);
+          if (retryCount < maxRetries) {
+            console.log('Retrying auth check...');
+            return getInitialUser(retryCount + 1);
+          }
+        }
+        
         console.log('Initial user retrieved:', !!user, user?.id);
 
         setSession(null);
@@ -129,6 +145,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error getting initial user:', error);
+        if (retryCount < maxRetries) {
+          console.log('Retrying due to error...');
+          return getInitialUser(retryCount + 1);
+        }
       } finally {
         console.log('Initial user loading complete');
         setLoading(false);
@@ -146,11 +166,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        setLoading(true); // Set loading while processing auth change
         console.log('Auth state change event:', event);
+        
+        // Only set loading for specific events to prevent infinite loading
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          setLoading(true);
+        }
 
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const { data: { user }, error } = await supabase.auth.getUser();
+          
+          if (error) {
+            console.error('Error getting user in auth state change:', error);
+            // Don't update state if there's an error - keep current state
+            return;
+          }
+          
           setSession(null);
           setUser(user ?? null);
 
@@ -162,7 +193,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Error handling auth state change:', error);
         } finally {
-          setLoading(false);
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            setLoading(false);
+          }
         }
       }
     );

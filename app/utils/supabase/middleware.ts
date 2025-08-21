@@ -42,13 +42,23 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Only redirect to auth if user is accessing protected routes without authentication
+  // Allow public routes and don't interfere with auth refresh process
+  const isPublicRoute = request.nextUrl.pathname === "/" || 
+                       request.nextUrl.pathname.startsWith("/signup") ||
+                       request.nextUrl.pathname.startsWith("/auth") ||
+                       request.nextUrl.pathname.startsWith("/contact") ||
+                       request.nextUrl.pathname.startsWith("/privacy") ||
+                       request.nextUrl.pathname.startsWith("/terms") ||
+                       request.nextUrl.pathname.startsWith("/api/");
+
+  const isProtectedRoute = request.nextUrl.pathname.startsWith("/dashboard") ||
+                          request.nextUrl.pathname.startsWith("/admin") ||
+                          request.nextUrl.pathname.startsWith("/profile");
+
+  // Only redirect unauthenticated users from protected routes
+  if (isProtectedRoute && !user) {
+    console.log('Redirecting unauthenticated user from protected route:', request.nextUrl.pathname);
     const url = request.nextUrl.clone();
     url.pathname = "/auth";
     return NextResponse.redirect(url);
