@@ -125,7 +125,7 @@ export default function SignupPage() {
 
       {/* Main Content */}
       <main className="relative z-10 flex items-center justify-center min-h-[calc(100vh-120px)] px-4 py-8">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-6xl">
           {/* Security Badge */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center bg-blue-900/30 border border-blue-700/50 rounded-full px-4 py-2 text-sm">
@@ -136,13 +136,15 @@ export default function SignupPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 text-sm">
+            <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 text-sm max-w-md mx-auto">
               {error}
             </div>
           )}
 
-          {/* Signup Card */}
-          <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 shadow-2xl">
+          {/* Signup Layout - Side by Side */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+            {/* Signup Card */}
+            <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8 shadow-2xl w-full max-w-md">
             {/* Welcome Header */}
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">Join NOX METALS</h1>
@@ -377,6 +379,36 @@ export default function SignupPage() {
                 >
                   Sign in here
                 </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Demo Admin Credentials Note */}
+            <div className="bg-blue-900/20 border border-blue-700/30 rounded-xl p-6 shadow-xl w-full max-w-sm">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <svg className="w-6 h-6 text-blue-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-lg font-semibold text-blue-300 mb-3">Demo Admin Access</h3>
+                  <div className="text-sm text-blue-200">
+                    <p className="mb-3">Try the demo admin account to explore the full features:</p>
+                    <div className="bg-blue-900/30 border border-blue-700/50 rounded-lg p-4 font-mono text-sm">
+                      <div className="mb-2"><span className="text-blue-300 font-medium">Email:</span></div>
+                      <div className="text-blue-100 mb-3">admin@gmail.com</div>
+                      <div className="mb-2"><span className="text-blue-300 font-medium">Password:</span></div>
+                      <div className="text-blue-100">12345678</div>
+                    </div>
+                    <div className="mt-4 text-xs text-blue-300">
+                      <p>✨ Experience full admin capabilities</p>
+                      <p>📊 Effortlessly review, approve, or reject quotes</p>
+                      <p>📝 Oversee and manage all RFQ submissions</p>
+                      <p>🔍 Search, view user accounts</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

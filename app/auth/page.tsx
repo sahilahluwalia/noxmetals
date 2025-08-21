@@ -326,8 +326,10 @@ export default function AuthPage() {
                       <div className="text-blue-100">12345678</div>
                     </div>
                     <div className="mt-4 text-xs text-blue-300">
-                      <p>✨ Full admin dashboard access</p>
-                      <p>📊 View and manage quotes</p>
+                      <p>✨ Experience full admin capabilities</p>
+                      <p>📊 Effortlessly review, approve, or reject quotes</p>
+                      <p>📝 Oversee and manage all RFQ submissions</p>
+                      <p>🔍 Search, view user accounts</p>
                     </div>
                   </div>
                 </div>
