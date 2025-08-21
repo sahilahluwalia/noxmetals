@@ -13,6 +13,19 @@ export default function AuthPage() {
   // Using singleton supabase instance
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Check for error parameter from callback
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'auth_callback_error') {
+      setError('Authentication failed. Please try again.');
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, []);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -55,7 +68,7 @@ export default function AuthPage() {
         // Successfully signed in - redirect will happen in useEffect
         setAuthLoading(false);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
       setAuthLoading(false);
     }
@@ -66,7 +79,7 @@ export default function AuthPage() {
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: provider.toLowerCase() as 'google' | 'github' | 'linkedin',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
@@ -78,7 +91,7 @@ export default function AuthPage() {
         setAuthLoading(false);
       }
       // OAuth will redirect the user, so no need to handle navigation here
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
       setAuthLoading(false);
     }
@@ -315,7 +328,6 @@ export default function AuthPage() {
                     <div className="mt-4 text-xs text-blue-300">
                       <p>✨ Full admin dashboard access</p>
                       <p>📊 View and manage quotes</p>
-                      <p>⚙️ System configuration</p>
                     </div>
                   </div>
                 </div>
