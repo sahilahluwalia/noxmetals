@@ -199,7 +199,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Support</div>
                   <Link
-                    href="/dashboard/contact-support"
+                    href="/contact"
                     className="w-full cursor-pointer bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                   >
                     Contact Support
