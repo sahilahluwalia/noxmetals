@@ -21,6 +21,8 @@ export default function SignupPage() {
     newsletter: true
   });
 
+
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -73,7 +75,7 @@ export default function SignupPage() {
           router.push('/');
         }
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -85,7 +87,7 @@ export default function SignupPage() {
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: provider.toLowerCase() as 'google' | 'github' | 'linkedin',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`
@@ -96,7 +98,7 @@ export default function SignupPage() {
         setError(error.message);
       }
       // OAuth will redirect the user, so no need to handle navigation here
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

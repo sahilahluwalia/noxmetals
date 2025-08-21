@@ -63,6 +63,8 @@ export default function Home() {
     }
   };
 
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -133,8 +135,56 @@ export default function Home() {
         }, 5000);
 
       } else {
-        // User is not logged in - show message to create account
-        setMessage({ type: 'error', text: 'Please create an account or log in to submit quotes. This helps us track your requests and provide better service.' });
+        // User is not logged in - submit quote anonymously and encourage login
+        // First, submit the quote to the system without a user_id
+        const { error } = await supabase
+          .from('quotes')
+          .insert({
+            user_id: null, // No user_id for anonymous quotes
+            full_name: validatedData.fullName,
+            company: validatedData.company,
+            email: validatedData.email,
+            phone: validatedData.phone || null,
+            length: parseFloat(validatedData.length),
+            width: parseFloat(validatedData.width),
+            height: parseFloat(validatedData.height),
+            material: validatedData.material,
+            quantity: parseInt(validatedData.qty),
+            material_spec: validatedData.materialSpec || null,
+            dfars_required: validatedData.dfarsRequired,
+            additional_notes: validatedData.additionalNotes || null,
+            status: 'pending'
+          });
+
+        if (error) {
+          console.error('Supabase error:', error);
+          throw new Error(error.message || 'Database error occurred');
+        }
+
+        // Show success message
+        setMessage({ 
+          type: 'success', 
+          text: '✅ Quote submitted successfully! 🔐 Login to view your request and track progress.' 
+        });
+
+        // Reset form after successful submission
+        setTimeout(() => {
+          setFormData({
+            fullName: '',
+            company: '',
+            email: '',
+            phone: '',
+            length: '',
+            width: '',
+            height: '',
+            material: '',
+            qty: '1',
+            materialSpec: '',
+            dfarsRequired: false,
+            additionalNotes: ''
+          });
+          setMessage(null);
+        }, 6000);
       }
     } catch (error) {
       console.error('Error submitting quote:', error);
@@ -234,7 +284,7 @@ export default function Home() {
                 </p>
               ) : (
                 <p className="text-sm text-yellow-400 mb-4">
-                  ⚠️ Create an account to save and track your quotes
+                  {/* ⚠️ Create an account to save and track your quotes */}
                 </p>
               )}
               
