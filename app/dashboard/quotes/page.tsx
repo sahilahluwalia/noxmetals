@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
-import { QuotesArraySchema, type Quote } from '../../utils/schemas/quoteSchemas';
+import { QuotesArraySchema, QuoteSchema, type Quote } from '../../utils/schemas/quoteSchemas';
 
 // Quote type is now imported from schemas
 
@@ -39,16 +39,35 @@ export default function QuotesPage() {
         throw new Error(`Database error: ${error.message}`);
       }
       
+      console.log('Raw quote data from Supabase:', data);
+      
       // Validate the response data with Zod
       const validationResult = QuotesArraySchema.safeParse(data || []);
       
       if (!validationResult.success) {
         console.error('Data validation errors:', validationResult.error.issues);
-        const errorMessages = validationResult.error.issues.map(issue => 
+        console.error('Failed data sample:', data?.[0]); // Log first failed record for debugging
+        const errorMessages = validationResult.error.issues.slice(0, 5).map(issue => 
           `${issue.path.join('.')}: ${issue.message}`
         );
         setValidationErrors(errorMessages);
-        setError('Data validation failed. Some quote data may be corrupted.');
+        
+        // Try to set quotes anyway, filtering out invalid ones
+        try {
+          const validQuotes = (data || []).filter((quote: any) => {
+            const singleQuoteResult = QuoteSchema.safeParse(quote);
+            return singleQuoteResult.success;
+          });
+          
+          if (validQuotes.length > 0) {
+            setQuotes(validQuotes);
+            setError(`Some quote data validation failed, showing ${validQuotes.length} valid quotes out of ${data?.length || 0}.`);
+          } else {
+            setError('Data validation failed. Some quote data may be corrupted.');
+          }
+        } catch (filterError) {
+          setError('Data validation failed. Some quote data may be corrupted.');
+        }
         return;
       }
       

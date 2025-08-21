@@ -74,7 +74,8 @@ export const QuoteFormSchema = z.object({
 // Quote data schema (for API responses)
 export const QuoteSchema = z.object({
   id: z.string().uuid(),
-  created_at: z.string().datetime(),
+  created_at: z.string(), // More flexible date validation - Supabase format may vary
+  updated_at: z.string().optional(), // Add updated_at field that might be present
   full_name: z.string(),
   company: z.string(),
   email: z.string().email(),
@@ -87,7 +88,7 @@ export const QuoteSchema = z.object({
   material_spec: z.string().nullable(),
   dfars_required: z.boolean(),
   additional_notes: z.string().nullable(),
-  status: z.enum(['pending', 'approved', 'rejected', 'in_progress']),
+  status: z.enum(['pending', 'approved', 'rejected', 'in_progress', 'completed']),
   user_id: z.string().uuid()
 });
 

@@ -14,6 +14,14 @@ interface QuoteStats {
   in_progress_quotes: number;
 }
 
+interface MultilineRfqStats {
+  total_rfqs: number;
+  pending_rfqs: number;
+  approved_rfqs: number;
+  rejected_rfqs: number;
+  in_progress_rfqs: number;
+}
+
 export default function DashboardPage() {
   const { user, loading, isAdmin, userRole } = useAuth();
   const router = useRouter();
@@ -23,6 +31,13 @@ export default function DashboardPage() {
     approved_quotes: 0,
     rejected_quotes: 0,
     in_progress_quotes: 0
+  });
+  const [multilineRfqStats, setMultilineRfqStats] = useState<MultilineRfqStats>({
+    total_rfqs: 0,
+    pending_rfqs: 0,
+    approved_rfqs: 0,
+    rejected_rfqs: 0,
+    in_progress_rfqs: 0
   });
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -38,12 +53,12 @@ export default function DashboardPage() {
       // Using singleton supabase instance
       
       // Get quote statistics
-      const { data: quotes, error } = await supabase
+      const { data: quotes, error: quotesError } = await supabase
         .from('quotes')
         .select('status')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (quotesError) throw quotesError;
       
       const stats = {
         total_quotes: quotes?.length || 0,
@@ -54,8 +69,28 @@ export default function DashboardPage() {
       };
       
       setQuoteStats(stats);
+
+      // Get multi-line RFQ statistics
+      const { data: rfqs, error: rfqsError } = await supabase
+        .from('multiline_rfqs')
+        .select('status')
+        .eq('user_id', user.id);
+
+      if (rfqsError) {
+        console.error('Error fetching RFQ stats:', rfqsError);
+      } else {
+        const rfqStats = {
+          total_rfqs: rfqs?.length || 0,
+          pending_rfqs: rfqs?.filter(r => r.status === 'pending').length || 0,
+          approved_rfqs: rfqs?.filter(r => r.status === 'approved').length || 0,
+          rejected_rfqs: rfqs?.filter(r => r.status === 'rejected').length || 0,
+          in_progress_rfqs: rfqs?.filter(r => r.status === 'in_progress').length || 0
+        };
+        
+        setMultilineRfqStats(rfqStats);
+      }
     } catch (err) {
-      console.error('Error fetching quote stats:', err);
+      console.error('Error fetching stats:', err);
     } finally {
       setStatsLoading(false);
     }
@@ -132,10 +167,24 @@ export default function DashboardPage() {
                   Submit New Quote
                 </button>
                 <button 
+                  onClick={() => router.push('/dashboard/multiline-rfq')}
+                  className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>🚀</span>
+                  Multi-Line RFQ
+                </button>
+                <button 
                   onClick={() => router.push('/dashboard/quotes')}
                   className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors"
                 >
                   Show Past Quotes
+                </button>
+                <button 
+                  onClick={() => router.push('/dashboard/rfq-history')}
+                  className="w-full bg-purple-700 hover:bg-purple-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>🚀</span>
+                  Multi-Line RFQ History
                 </button>
                 <button className="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-medium transition-colors">
                   Contact Support
@@ -204,8 +253,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Quote Summary Cards */}
-          {(statsLoading || quoteStats.total_quotes > 0) && (
+          {/* Quote & RFQ Summary Cards */}
+          {(statsLoading || quoteStats.total_quotes > 0 || multilineRfqStats.total_rfqs > 0) && (
             <div className="mt-8">
               <h2 className="text-2xl font-bold mb-6">Quote Overview</h2>
               {statsLoading ? (
@@ -218,23 +267,59 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-blue-400">{quoteStats.total_quotes}</div>
-                    <div className="text-sm text-gray-400">Total Quotes</div>
-                  </div>
-                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-yellow-400">{quoteStats.pending_quotes}</div>
-                    <div className="text-sm text-gray-400">Pending Review</div>
-                  </div>
-                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-green-400">{quoteStats.approved_quotes}</div>
-                    <div className="text-sm text-gray-400">Approved</div>
-                  </div>
-                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-blue-400">{quoteStats.in_progress_quotes}</div>
-                    <div className="text-sm text-gray-400">In Progress</div>
-                  </div>
+                <div className="space-y-6">
+                  {/* Regular Quotes */}
+                  {quoteStats.total_quotes > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-blue-400">Regular Quotes</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-blue-400">{quoteStats.total_quotes}</div>
+                          <div className="text-sm text-gray-400">Total Quotes</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-yellow-400">{quoteStats.pending_quotes}</div>
+                          <div className="text-sm text-gray-400">Pending Review</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-green-400">{quoteStats.approved_quotes}</div>
+                          <div className="text-sm text-gray-400">Approved</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-blue-400">{quoteStats.in_progress_quotes}</div>
+                          <div className="text-sm text-gray-400">In Progress</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Multi-Line RFQs */}
+                  {multilineRfqStats.total_rfqs > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 text-purple-400 flex items-center gap-2">
+                        <span>🚀</span>
+                        Multi-Line RFQs
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-purple-700/30 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-purple-400">{multilineRfqStats.total_rfqs}</div>
+                          <div className="text-sm text-gray-400">Total RFQs</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-purple-700/30 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-yellow-400">{multilineRfqStats.pending_rfqs}</div>
+                          <div className="text-sm text-gray-400">Pending Review</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-purple-700/30 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-green-400">{multilineRfqStats.approved_rfqs}</div>
+                          <div className="text-sm text-gray-400">Approved</div>
+                        </div>
+                        <div className="bg-gray-800/60 backdrop-blur-sm border border-purple-700/30 rounded-lg p-4 text-center">
+                          <div className="text-3xl font-bold text-purple-400">{multilineRfqStats.in_progress_rfqs}</div>
+                          <div className="text-sm text-gray-400">In Progress</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
