@@ -85,7 +85,21 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center space-x-4">
-            {!loading && (
+            {loading ? (
+              <div className="flex items-center space-x-4">
+                <div className="hidden sm:block h-9 w-28 rounded-md bg-gray-800/70 animate-pulse" />
+                <div className="flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-gray-800/70 animate-pulse" />
+                  <div className="hidden sm:block">
+                    <div className="h-3 w-24 bg-gray-800/70 rounded animate-pulse mb-1" />
+                    <div className="h-2 w-16 bg-gray-800/70 rounded animate-pulse" />
+                  </div>
+                </div>
+                {!isAdminPage && (
+                  <div className="h-9 w-24 rounded-md bg-blue-900/40 animate-pulse" />
+                )}
+              </div>
+            ) : (
               <>
                 {user ? (
                   // User is authenticated
@@ -176,8 +190,6 @@ export default function Header() {
                 ) : (
                   // User is not authenticated
                   <>
-
-
                     <Link 
                       href="/auth" 
                       className="text-gray-300 hover:text-white transition-colors"
@@ -254,7 +266,22 @@ export default function Header() {
                 </>
               )}
               <div className="border-t border-gray-700 pt-2 mt-2">
-                {!loading && (
+                {loading ? (
+                  <>
+                    <div className="px-3 py-2 border-b border-gray-700 pb-2 mb-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="h-8 w-8 rounded-full bg-gray-800/70 animate-pulse" />
+                        <div className="flex-1">
+                          <div className="h-3 w-40 bg-gray-800/70 rounded animate-pulse mb-1" />
+                          <div className="h-2 w-24 bg-gray-800/70 rounded animate-pulse" />
+                        </div>
+                      </div>
+                    </div>
+                    {!isAdminPage && (
+                      <div className="block px-3 py-2 bg-blue-900/40 rounded mt-2 animate-pulse" />
+                    )}
+                  </>
+                ) : (
                   <>
                     {user ? (
                       // User is authenticated in mobile menu
@@ -302,7 +329,6 @@ export default function Header() {
                     ) : (
                       // User is not authenticated in mobile menu
                       <>
-
                         <Link 
                           href="/auth" 
                           className="block px-3 py-2 text-gray-300 hover:text-white transition-colors"
@@ -315,13 +341,17 @@ export default function Header() {
                   </>
                 )}
                 {!isAdminPage && (
-                  <Link 
-                    href="/#quote" 
-                    className="block px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded mt-2 text-center font-medium transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Get Quote
-                  </Link>
+                  loading ? (
+                    <div className="block px-3 py-2 bg-blue-900/40 rounded mt-2 animate-pulse" />
+                  ) : (
+                    <Link 
+                      href="/#quote" 
+                      className="block px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded mt-2 text-center font-medium transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Get Quote
+                    </Link>
+                  )
                 )}
               </div>
             </div>
