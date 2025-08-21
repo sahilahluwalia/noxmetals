@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../../utils/supabase/client';
+import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 
 interface QuoteFormData {
@@ -76,7 +76,7 @@ export default function SubmitQuotePage() {
     setMessage(null);
 
     try {
-      const supabase = createClient();
+      // Using singleton supabase instance
       
       const { error } = await supabase
         .from('quotes')

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Header from '../components/Header';
 
 export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
@@ -68,10 +69,10 @@ export default function ProfilePage() {
       // Auto-hide success message after 3 seconds
       setTimeout(() => setMessage(null), 3000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to update profile'
+        text: error instanceof Error ? error.message : 'Failed to update profile'
       });
     } finally {
       setIsLoading(false);
@@ -106,23 +107,31 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8">
+    <div className="min-h-screen bg-gray-900 text-white">
+      <Header />
+      
+      <main className=" z-10 pt-5 px-4 py-8">
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 rounded-full mb-4">
-              <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          <div className="mb-8">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center text-gray-400 hover:text-white mb-4 transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Profile Settings</h1>
-            <p className="text-gray-400">Manage your account information</p>
+              Back to Dashboard
+            </button>
+            <h1 className="text-4xl font-bold mb-4">Profile Settings</h1>
+            <p className="text-gray-400 text-lg">Manage your account information</p>
           </div>
+
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6">
 
           {/* Message Display */}
           {message && (
-            <div className={`mb-6 p-4 rounded-lg ${
+            <div className={`mb-4 p-3 rounded-lg ${
               message.type === 'success' 
                 ? 'bg-green-600/20 border border-green-500/30 text-green-300' 
                 : 'bg-red-600/20 border border-red-500/30 text-red-300'
@@ -141,7 +150,7 @@ export default function ProfilePage() {
           )}
 
           {/* Profile Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email (Read-only) */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -202,7 +211,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6">
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
               <button
                 type="submit"
                 disabled={isLoading}
@@ -235,9 +244,9 @@ export default function ProfilePage() {
           </form>
 
           {/* Account Info Card */}
-          <div className="mt-8 p-6 bg-gray-700/30 rounded-lg border border-gray-600/30">
-            <h3 className="text-lg font-semibold text-white mb-4">Account Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+          <div className="mt-6 p-4 bg-gray-700/30 rounded-lg border border-gray-600/30">
+            <h3 className="text-lg font-semibold text-white mb-3">Account Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-400">Account ID:</span>
                 <p className="text-gray-300 font-mono text-xs mt-1 break-all">{user.id}</p>
@@ -255,20 +264,10 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Back</span>
-            </button>
-          </div>
+
         </div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

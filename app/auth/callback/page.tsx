@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../../utils/supabase/client';
+import { supabase } from '../../utils/supabase/client';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const supabase = createClient();
+  // Using singleton supabase instance
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

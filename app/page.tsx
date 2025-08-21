@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
-import { createClient } from './utils/supabase/client';
+import { supabase } from './utils/supabase/client';
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -54,7 +54,7 @@ export default function Home() {
     try {
       if (user) {
         // User is logged in - save to their account
-        const supabase = createClient();
+        // Using singleton supabase instance
         
         const { error } = await supabase
           .from('quotes')

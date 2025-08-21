@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../../utils/supabase/client';
+import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
 
 interface Quote {
@@ -48,7 +48,7 @@ export default function QuotesPage() {
     
     try {
       setLoadingQuotes(true);
-      const supabase = createClient();
+      // Using singleton supabase instance
       
       const { data, error } = await supabase
         .from('quotes')

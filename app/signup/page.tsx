@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../utils/supabase/client';
+import { supabase } from '../utils/supabase/client';
 import Header from '../components/Header';
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
+  // Using singleton supabase instance
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({

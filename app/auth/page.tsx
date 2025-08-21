@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../utils/supabase/client';
+import { supabase } from '../utils/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Header';
 
 export default function AuthPage() {
   const router = useRouter();
   const { user, loading, isAdmin } = useAuth();
-  const supabase = createClient();
+  // Using singleton supabase instance
   const [authLoading, setAuthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({

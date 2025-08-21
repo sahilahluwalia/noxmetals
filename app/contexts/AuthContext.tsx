@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { createClient } from '../utils/supabase/client';
+import { supabase } from '../utils/supabase/client';
 
 interface UserRole {
   id: string;
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const supabase = createClient();
+  // Using singleton supabase instance
 
   const fetchUserRole = useCallback(async (userId: string) => {
     try {
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select('*')
         .eq('user_id', userId)
         .single();
-
+      console.log('User role data:', data);
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
         console.error('Error fetching user role:', error);
         // Set default role as 'user' if no role found

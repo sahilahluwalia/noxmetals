@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Header from '../components/Header';
-import { createClient } from '../utils/supabase/client';
+import { supabase } from '../utils/supabase/client';
 
 interface QuoteStats {
   total_quotes: number;
@@ -24,12 +24,18 @@ export default function DashboardPage() {
     rejected_quotes: 0,
     in_progress_quotes: 0
   });
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const fetchQuoteStats = useCallback(async () => {
-    if (!user || isAdmin) return;
+
+    if (!user || isAdmin) {
+      console.log('No user or admin');
+      return;
+    };
     
+    setStatsLoading(true);
     try {
-      const supabase = createClient();
+      // Using singleton supabase instance
       
       // Get quote statistics
       const { data: quotes, error } = await supabase
@@ -50,6 +56,8 @@ export default function DashboardPage() {
       setQuoteStats(stats);
     } catch (err) {
       console.error('Error fetching quote stats:', err);
+    } finally {
+      setStatsLoading(false);
     }
   }, [user, isAdmin]);
 
@@ -79,17 +87,7 @@ export default function DashboardPage() {
     }
   }, [user, loading, isAdmin, userRole, router, fetchQuoteStats]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center px-4">
-        <div className="text-center max-w-sm mx-auto">
-          <div className="animate-spin rounded-full h-16 w-16 sm:h-12 sm:w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400 text-lg sm:text-base">Loading your dashboard...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait while we verify your credentials</p>
-        </div>
-      </div>
-    );
-  }
+  
 
   if (!user || isAdmin) {
     return null; // Will redirect in useEffect
@@ -204,27 +202,38 @@ export default function DashboardPage() {
           </div>
 
           {/* Quote Summary Cards */}
-          {quoteStats.total_quotes > 0 && (
+          {(statsLoading || quoteStats.total_quotes > 0) && (
             <div className="mt-8">
               <h2 className="text-2xl font-bold mb-6">Quote Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-400">{quoteStats.total_quotes}</div>
-                  <div className="text-sm text-gray-400">Total Quotes</div>
+              {statsLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, index) => (
+                    <div key={index} className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center animate-pulse">
+                      <div className="h-8 bg-gray-700/50 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-700/30 rounded mx-auto w-3/4"></div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-yellow-400">{quoteStats.pending_quotes}</div>
-                  <div className="text-sm text-gray-400">Pending Review</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-blue-400">{quoteStats.total_quotes}</div>
+                    <div className="text-sm text-gray-400">Total Quotes</div>
+                  </div>
+                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-yellow-400">{quoteStats.pending_quotes}</div>
+                    <div className="text-sm text-gray-400">Pending Review</div>
+                  </div>
+                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-green-400">{quoteStats.approved_quotes}</div>
+                    <div className="text-sm text-gray-400">Approved</div>
+                  </div>
+                  <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
+                    <div className="text-3xl font-bold text-blue-400">{quoteStats.in_progress_quotes}</div>
+                    <div className="text-sm text-gray-400">In Progress</div>
+                  </div>
                 </div>
-                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-green-400">{quoteStats.approved_quotes}</div>
-                  <div className="text-sm text-gray-400">Approved</div>
-                </div>
-                <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-400">{quoteStats.in_progress_quotes}</div>
-                  <div className="text-sm text-gray-400">In Progress</div>
-                </div>
-              </div>
+              )}
             </div>
           )}
 

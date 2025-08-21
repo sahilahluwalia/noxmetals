@@ -140,16 +140,7 @@ export default function Header() {
                               <div className="font-medium text-white">{user.user_metadata?.full_name || 'User'}</div>
                               <div className="text-xs">{user.email}</div>
                             </div>
-                            <Link
-                              href="/dashboard"
-                              className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
-                              onClick={() => setAccountDropdownOpen(false)}
-                            >
-                              <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                              </svg>
-                              Dashboard
-                            </Link>
+
                             <Link
                               href="/profile"
                               className="flex items-center px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 transition-colors"
@@ -293,16 +284,7 @@ export default function Header() {
                             </div>
                           )}
                         </div>
-                        <Link
-                          href="/dashboard"
-                          className="flex items-center px-3 py-2 text-gray-300 hover:text-white transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                          </svg>
-                          Dashboard
-                        </Link>
+
                         <Link
                           href="/profile"
                           className="flex items-center px-3 py-2 text-gray-300 hover:text-white transition-colors"
