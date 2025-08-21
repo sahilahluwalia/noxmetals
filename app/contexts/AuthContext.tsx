@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const router = useRouter();
 
   // ✅ Create client instance within component, not singleton
@@ -105,14 +106,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const getInitialUser = async () => {
+    const getInitialAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Get session first, then extract user from it
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
-        setUser(user ?? null);
-        setSession(null);
+        const user = session?.user ?? null;
+        setUser(user);
+        setSession(session);
 
         if (user) {
           await fetchUserRole(user.id);
@@ -122,24 +125,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         if (mounted) {
           setUser(null);
+          setSession(null);
           setUserRole(null);
         }
       } finally {
         if (mounted) {
           setLoading(false);
+          setInitialLoadComplete(true);
         }
       }
     };
 
-    getInitialUser();
+    getInitialAuth();
 
-    // ✅ Only listen for relevant auth events
+    // ✅ Handle all relevant auth events including initial session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted || isSigningOut) return;
 
-        // ✅ Only fetch role for sign-in events, not token refresh
-        if (event === 'SIGNED_IN') {
+        // ✅ Handle initial session - crucial for SSR hydration
+        if (event === 'INITIAL_SESSION') {
+          setUser(session?.user ?? null);
+          setSession(session);
+          if (session?.user) {
+            await fetchUserRole(session.user.id);
+          } else {
+            setUserRole(null);
+          }
+          setLoading(false);
+          setInitialLoadComplete(true);
+        } else if (event === 'SIGNED_IN') {
           setUser(session?.user ?? null);
           setSession(session);
           if (session?.user) {
@@ -165,6 +180,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [fetchUserRole, isSigningOut, supabase, roleCache]);
 
+  // ✅ Add timeout mechanism to prevent infinite loading states
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading && !initialLoadComplete && !isSigningOut) {
+        console.warn('Auth loading timeout reached, forcing load complete');
+        setLoading(false);
+        setInitialLoadComplete(true);
+      }
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [loading, initialLoadComplete, isSigningOut]);
+
   const signOut = async () => {
     try {
       setIsSigningOut(true);
@@ -182,6 +210,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
       setLoading(false);
+      setInitialLoadComplete(true);
+      roleCache.clear();
       
       console.log('Sign out successful, redirecting to auth page...');
       // Navigate to auth page
@@ -222,8 +252,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = userRole?.role === 'admin' || userRole?.role === 'super_admin';
   const isSuperAdmin = userRole?.role === 'super_admin';
 
-  // ✅ Simplified loading state without roleLoading
-  const isLoading = isSigningOut ? false : loading;
+  // ✅ Optimized loading state for better SSR/hydration experience
+  const isLoading = isSigningOut ? false : (loading && !initialLoadComplete);
 
   const value = {
     user,
