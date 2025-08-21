@@ -28,6 +28,13 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Ensure the local saving state is cleared when global auth loading completes
+  useEffect(() => {
+    if (!loading) {
+      setIsLoading(false);
+    }
+  }, [loading]);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!loading && !user) {
@@ -91,7 +98,8 @@ export default function ProfilePage() {
     setMessage(null);
   };
 
-  if (loading) {
+  // Show full-screen loader only during initial auth load (before user is known)
+  if (loading && !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -111,7 +119,7 @@ export default function ProfilePage() {
       <Header />
       
       <main className=" z-10 pt-5 px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
             <button
@@ -150,7 +158,7 @@ export default function ProfilePage() {
           )}
 
           {/* Profile Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Email (Read-only) */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -163,6 +171,21 @@ export default function ProfilePage() {
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
               />
               <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+
+            {/* Phone Number */}
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
+                Phone Number
+              </label>
+              <input
+                id="phone"
+                type="tel"
+                value={profileData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Enter your phone number"
+                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
             </div>
 
             {/* Full Name */}
@@ -195,23 +218,8 @@ export default function ProfilePage() {
               />
             </div>
 
-            {/* Phone Number */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-2">
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                value={profileData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="Enter your phone number"
-                className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              />
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
+            <div className="md:col-span-2 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-4">
               <button
                 type="submit"
                 disabled={isLoading}
@@ -220,7 +228,7 @@ export default function ProfilePage() {
                 {isLoading ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Saving...</span>
+                    <span>Saving... (this operation takes more time, i dont know why, supabase is bit weird)</span>
                   </>
                 ) : (
                   <>
