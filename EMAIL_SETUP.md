@@ -124,3 +124,4 @@ Both email templates are fully responsive and optimized for:
 - Email sending failures don't block quote status updates
 - Input validation prevents malicious email content
 - Rate limiting should be added for production use
+

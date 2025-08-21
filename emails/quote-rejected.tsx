@@ -243,3 +243,4 @@ const footer = {
   lineHeight: '20px',
   margin: '0 0 16px',
 };
+
