@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import { supabase } from './utils/supabase/client';
+import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from './utils/schemas/quoteSchemas';
 
 export default function Home() {
   const { user, loading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<QuoteFormErrors | null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<QuoteFormData>({
     fullName: '',
     company: '',
     email: '',
@@ -21,7 +23,8 @@ export default function Home() {
     material: '',
     qty: '1',
     materialSpec: '',
-    dfarsRequired: false
+    dfarsRequired: false,
+    additionalNotes: '' // Added to match schema
   });
 
   // Pre-fill form with user data if logged in
@@ -38,6 +41,20 @@ export default function Home() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    
+    // Clear validation errors for this field when user starts typing
+    if (validationErrors?.fieldErrors?.[name as keyof QuoteFormData]) {
+      setValidationErrors(prev => {
+        if (!prev) return null;
+        const newFieldErrors = { ...prev.fieldErrors };
+        delete newFieldErrors[name as keyof QuoteFormData];
+        return {
+          ...prev,
+          fieldErrors: newFieldErrors
+        };
+      });
+    }
+    
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -50,34 +67,51 @@ export default function Home() {
     e.preventDefault();
     setSubmitting(true);
     setMessage(null);
+    setValidationErrors(null);
 
     try {
+      // Validate form data with Zod
+      const validationResult = QuoteFormSchema.safeParse(formData);
+      
+      if (!validationResult.success) {
+        const formattedErrors = formatZodErrors(validationResult.error);
+        setValidationErrors(formattedErrors);
+        setMessage({ type: 'error', text: 'Please fix the validation errors below.' });
+        setSubmitting(false);
+        return;
+      }
+
+      const validatedData = validationResult.data;
+
       if (user) {
         // User is logged in - save to their account
         // Using singleton supabase instance
-        
         const { error } = await supabase
           .from('quotes')
           .insert({
             user_id: user.id,
-            full_name: formData.fullName,
-            company: formData.company,
-            email: formData.email,
-            phone: formData.phone,
-            length: parseFloat(formData.length) || 0,
-            width: parseFloat(formData.width) || 0,
-            height: parseFloat(formData.height) || 0,
-            material: formData.material,
-            quantity: parseInt(formData.qty) || 1,
-            material_spec: formData.materialSpec,
-            dfars_required: formData.dfarsRequired,
-            additional_notes: '',
+            full_name: validatedData.fullName,
+            company: validatedData.company,
+            email: validatedData.email,
+            phone: validatedData.phone || null,
+            length: parseFloat(validatedData.length),
+            width: parseFloat(validatedData.width),
+            height: parseFloat(validatedData.height),
+            material: validatedData.material,
+            quantity: parseInt(validatedData.qty),
+            material_spec: validatedData.materialSpec || null,
+            dfars_required: validatedData.dfarsRequired,
+            additional_notes: validatedData.additionalNotes || null,
             status: 'pending'
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Supabase error:', error);
+          throw new Error(error.message || 'Database error occurred');
+        }
 
         setMessage({ type: 'success', text: 'Quote submitted successfully! Check your dashboard to track progress. 🎉' });
+        setValidationErrors(null);
         
         // Reset form after successful submission
         setTimeout(() => {
@@ -92,7 +126,8 @@ export default function Home() {
             material: '',
             qty: '1',
             materialSpec: '',
-            dfarsRequired: false
+            dfarsRequired: false,
+            additionalNotes: ''
           });
           setMessage(null);
         }, 5000);
@@ -103,7 +138,8 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error submitting quote:', error);
-      setMessage({ type: 'error', text: 'Failed to submit quote. Please try again or contact support.' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit quote. Please try again or contact support.';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -217,6 +253,18 @@ export default function Home() {
                 </div>
               )}
 
+              {/* Form-level Validation Errors */}
+              {validationErrors?.formErrors && validationErrors.formErrors.length > 0 && (
+                <div className="mb-4 p-3 bg-red-900/30 border border-red-700/50 rounded-lg">
+                  <h5 className="text-red-200 font-medium mb-1 text-sm">Validation Errors:</h5>
+                  <ul className="list-disc list-inside text-red-200 text-xs space-y-0.5">
+                    {validationErrors.formErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -228,8 +276,17 @@ export default function Home() {
                       onChange={handleInputChange}
                       placeholder="Jane Doe"
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.fullName)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.fullName) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.fullName)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Company</label>
@@ -240,8 +297,17 @@ export default function Home() {
                       onChange={handleInputChange}
                       placeholder="Acme Machining"
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.company)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.company) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.company)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -255,8 +321,17 @@ export default function Home() {
                       onChange={handleInputChange}
                       placeholder="jane@acme.com"
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.email)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.email) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.email)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Phone</label>
@@ -266,8 +341,17 @@ export default function Home() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="(555) 123-4567"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.phone)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.phone) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.phone)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -283,8 +367,17 @@ export default function Home() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.length)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.length) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.length)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Width (in)</label>
@@ -297,8 +390,17 @@ export default function Home() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.width)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.width) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.width)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Height (in)</label>
@@ -311,8 +413,17 @@ export default function Home() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.height)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.height) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.height)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -324,7 +435,11 @@ export default function Home() {
                       value={formData.material}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.material)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     >
                       <option value="">Select material</option>
                       <option value="6061-t6">6061-T6 Aluminum</option>
@@ -333,6 +448,11 @@ export default function Home() {
                       <option value="7050-t7451">7050-T7451 Aluminum</option>
                       <option value="p20-tool-steel">P20 Tool Steel</option>
                     </select>
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.material) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.material)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Qty</label>
@@ -343,8 +463,17 @@ export default function Home() {
                       onChange={handleInputChange}
                       min="1"
                       required
-                      className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.qty)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.qty) && (
+                      <p className="mt-1 text-xs text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.qty)}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -358,8 +487,17 @@ export default function Home() {
                     value={formData.materialSpec}
                     onChange={handleInputChange}
                     placeholder="e.g., AMS 4027 Rev G, T6"
-                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded focus:outline-none focus:border-blue-500"
+                    className={`w-full px-3 py-2 bg-gray-700 border rounded focus:outline-none transition-colors ${
+                      getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec)
+                        ? 'border-red-500 focus:border-red-400'
+                        : 'border-gray-600 focus:border-blue-500'
+                    }`}
                   />
+                  {getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec) && (
+                    <p className="mt-1 text-xs text-red-400">
+                      {getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec)}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-400 mt-1">
                     Include revision/temper and any specific certification requirements for traceability and quality control.
                   </p>

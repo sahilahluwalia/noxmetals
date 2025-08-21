@@ -81,16 +81,7 @@ export default function Header() {
                 </Link>
               </>
             )}
-            {isAdminPage && (
-              <>
-                <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  Admin Dashboard
-                </Link>
-                <Link href="/dashboard" className="text-gray-300 hover:text-white transition-colors">
-                  User Dashboard
-                </Link>
-              </>
-            )}
+           
           </nav>
 
           <div className="flex items-center space-x-4">
@@ -100,6 +91,14 @@ export default function Header() {
                   // User is authenticated
                   <div className="flex items-center space-x-4">
                     {/* Dashboard Button */}
+                    {isAdminPage ? (
+              <>
+                <Link href="/admin/dashboard" className="text-gray-300 hover:text-white transition-colors">
+                  Admin Dashboard
+                </Link>
+              
+              </>
+            ) : (
                     <Link
                       href="/dashboard"
                       className="hidden sm:flex items-center space-x-2 px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 rounded-md transition-colors"
@@ -109,7 +108,7 @@ export default function Header() {
                       </svg>
                       <span>Dashboard</span>
                     </Link>
-                    
+                    )}
                     {/* Account Dropdown */}
                     <div className="relative" ref={dropdownRef}>
                       <button

@@ -1,28 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
+import { QuotesArraySchema, type Quote } from '../../utils/schemas/quoteSchemas';
 
-interface Quote {
-  id: string;
-  created_at: string;
-  full_name: string;
-  company: string;
-  email: string;
-  phone: string;
-  length: number;
-  width: number;
-  height: number;
-  material: string;
-  quantity: number;
-  material_spec: string;
-  dfars_required: boolean;
-  additional_notes: string;
-  status: string;
-}
+// Quote type is now imported from schemas
 
 export default function QuotesPage() {
   const { user, loading } = useAuth();
@@ -32,6 +17,50 @@ export default function QuotesPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const fetchQuotes = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingQuotes(true);
+      setError(null);
+      setValidationErrors([]);
+      
+      // Using singleton supabase instance
+      const { data, error } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+      
+      // Validate the response data with Zod
+      const validationResult = QuotesArraySchema.safeParse(data || []);
+      
+      if (!validationResult.success) {
+        console.error('Data validation errors:', validationResult.error.issues);
+        const errorMessages = validationResult.error.issues.map(issue => 
+          `${issue.path.join('.')}: ${issue.message}`
+        );
+        setValidationErrors(errorMessages);
+        setError('Data validation failed. Some quote data may be corrupted.');
+        return;
+      }
+      
+      setQuotes(validationResult.data);
+    } catch (err) {
+      console.error('Error fetching quotes:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load quotes. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoadingQuotes(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -41,35 +70,25 @@ export default function QuotesPage() {
     if (user) {
       fetchQuotes();
     }
-  }, [user, loading, router]);
-
-  const fetchQuotes = async () => {
-    if (!user) return;
-    
-    try {
-      setLoadingQuotes(true);
-      // Using singleton supabase instance
-      
-      const { data, error } = await supabase
-        .from('quotes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      setQuotes(data || []);
-    } catch (err) {
-      console.error('Error fetching quotes:', err);
-      setError('Failed to load quotes. Please try again.');
-    } finally {
-      setLoadingQuotes(false);
-    }
-  };
+  }, [user, loading, router, fetchQuotes]);
 
   const openQuoteDetails = (quote: Quote) => {
-    setSelectedQuote(quote);
-    setShowDetailsModal(true);
+    try {
+      // Additional validation before opening modal
+      const isValidQuote = quote && quote.id && quote.full_name && quote.email;
+      
+      if (!isValidQuote) {
+        console.error('Invalid quote data:', quote);
+        setError('Unable to display quote details. Quote data appears to be corrupted.');
+        return;
+      }
+      
+      setSelectedQuote(quote);
+      setShowDetailsModal(true);
+    } catch (err) {
+      console.error('Error opening quote details:', err);
+      setError('Failed to open quote details. Please try again.');
+    }
   };
 
   const closeQuoteDetails = () => {
@@ -108,21 +127,44 @@ export default function QuotesPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      if (!dateString) return 'Unknown date';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid date';
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (err) {
+      console.error('Error formatting date:', err);
+      return 'Invalid date';
+    }
   };
 
   const formatDimensions = (length: number, width: number, height: number) => {
-    return `${length}" × ${width}" × ${height}"`;
+    try {
+      const l = isNaN(length) ? 0 : length;
+      const w = isNaN(width) ? 0 : width;
+      const h = isNaN(height) ? 0 : height;
+      return `${l}" × ${w}" × ${h}"`;
+    } catch (err) {
+      console.error('Error formatting dimensions:', err);
+      return 'Invalid dimensions';
+    }
   };
 
   const formatMaterial = (material: string) => {
-    return material.charAt(0).toUpperCase() + material.slice(1).replace('-', ' ');
+    try {
+      if (!material || typeof material !== 'string') return 'Unknown material';
+      return material.charAt(0).toUpperCase() + material.slice(1).replace('-', ' ');
+    } catch (err) {
+      console.error('Error formatting material:', err);
+      return 'Unknown material';
+    }
   };
 
   if (loading) {
@@ -176,7 +218,37 @@ export default function QuotesPage() {
           {/* Error Message */}
           {error && (
             <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg text-red-200">
-              {error}
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="font-medium mb-1">Error Loading Quotes</h4>
+                  <p>{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-700/50 rounded-lg">
+              <div className="flex items-start gap-2">
+                <svg className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <div>
+                  <h4 className="text-yellow-200 font-medium mb-2">Data Validation Issues</h4>
+                  <ul className="list-disc list-inside text-yellow-200 text-sm space-y-1">
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-yellow-300 mt-2">
+                    Some quote data may not display correctly. Please contact support if this persists.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -263,7 +335,7 @@ export default function QuotesPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No quotes yet</h3>
               <p className="text-gray-400 mb-6">
-                You haven't submitted any quote requests yet. Start by submitting your first quote!
+                You haven&apos;t submitted any quote requests yet. Start by submitting your first quote!
               </p>
               <button
                 onClick={() => router.push('/dashboard/submit-quote')}

@@ -66,7 +66,7 @@ After running the script, you should see:
 
 ### Option 1: Using SQL Function (Recommended)
 ```sql
-SELECT promote_to_admin('newadmin@example.com');
+SELECT promote_to_admin('admin@gmail.com');
 ```
 
 ### Option 2: Direct Database Insert
@@ -74,7 +74,7 @@ SELECT promote_to_admin('newadmin@example.com');
 INSERT INTO public.user_roles (user_id, role) 
 SELECT id, 'admin' 
 FROM auth.users 
-WHERE email = 'newadmin@example.com';
+WHERE email = 'admin@gmail.com';
 ```
 
 ## Troubleshooting

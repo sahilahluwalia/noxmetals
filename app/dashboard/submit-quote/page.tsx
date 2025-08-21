@@ -5,27 +5,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../utils/supabase/client';
 import Header from '../../components/Header';
+import { QuoteFormSchema, formatZodErrors, getFieldErrorMessage, type QuoteFormData, type QuoteFormErrors } from '../../utils/schemas/quoteSchemas';
 
-interface QuoteFormData {
-  fullName: string;
-  company: string;
-  email: string;
-  phone: string;
-  length: string;
-  width: string;
-  height: string;
-  material: string;
-  qty: string;
-  materialSpec: string;
-  dfarsRequired: boolean;
-  additionalNotes: string;
-}
+// QuoteFormData type is now imported from schemas
 
 export default function SubmitQuotePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<QuoteFormErrors | null>(null);
 
   const [formData, setFormData] = useState<QuoteFormData>({
     fullName: '',
@@ -60,6 +49,20 @@ export default function SubmitQuotePage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
+    
+    // Clear validation errors for this field when user starts typing
+    if (validationErrors?.fieldErrors?.[name as keyof QuoteFormData]) {
+      setValidationErrors(prev => {
+        if (!prev) return null;
+        const newFieldErrors = { ...prev.fieldErrors };
+        delete newFieldErrors[name as keyof QuoteFormData];
+        return {
+          ...prev,
+          fieldErrors: newFieldErrors
+        };
+      });
+    }
+    
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
@@ -74,32 +77,49 @@ export default function SubmitQuotePage() {
 
     setSubmitting(true);
     setMessage(null);
+    setValidationErrors(null);
 
     try {
-      // Using singleton supabase instance
+      // Validate form data with Zod
+      const validationResult = QuoteFormSchema.safeParse(formData);
       
+      if (!validationResult.success) {
+        const formattedErrors = formatZodErrors(validationResult.error);
+        setValidationErrors(formattedErrors);
+        setMessage({ type: 'error', text: 'Please fix the validation errors below.' });
+        setSubmitting(false);
+        return;
+      }
+
+      const validatedData = validationResult.data;
+      
+      // Using singleton supabase instance
       const { error } = await supabase
         .from('quotes')
         .insert({
           user_id: user.id,
-          full_name: formData.fullName,
-          company: formData.company,
-          email: formData.email,
-          phone: formData.phone,
-          length: parseFloat(formData.length) || 0,
-          width: parseFloat(formData.width) || 0,
-          height: parseFloat(formData.height) || 0,
-          material: formData.material,
-          quantity: parseInt(formData.qty) || 1,
-          material_spec: formData.materialSpec,
-          dfars_required: formData.dfarsRequired,
-          additional_notes: formData.additionalNotes,
+          full_name: validatedData.fullName,
+          company: validatedData.company,
+          email: validatedData.email,
+          phone: validatedData.phone || null,
+          length: parseFloat(validatedData.length),
+          width: parseFloat(validatedData.width),
+          height: parseFloat(validatedData.height),
+          material: validatedData.material,
+          quantity: parseInt(validatedData.qty),
+          material_spec: validatedData.materialSpec || null,
+          dfars_required: validatedData.dfarsRequired,
+          additional_notes: validatedData.additionalNotes || null,
           status: 'pending'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message || 'Database error occurred');
+      }
 
       setMessage({ type: 'success', text: 'Quote submitted successfully! 🎉' });
+      setValidationErrors(null);
       
       // Reset form after successful submission
       setTimeout(() => {
@@ -122,7 +142,8 @@ export default function SubmitQuotePage() {
 
     } catch (error) {
       console.error('Error submitting quote:', error);
-      setMessage({ type: 'error', text: 'Failed to submit quote. Please try again.' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit quote. Please try again.';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -177,6 +198,18 @@ export default function SubmitQuotePage() {
             </div>
           )}
 
+          {/* Form-level Validation Errors */}
+          {validationErrors?.formErrors && validationErrors.formErrors.length > 0 && (
+            <div className="mb-6 p-4 bg-red-900/30 border border-red-700/50 rounded-lg">
+              <h4 className="text-red-200 font-medium mb-2">Form Validation Errors:</h4>
+              <ul className="list-disc list-inside text-red-200 text-sm space-y-1">
+                {validationErrors.formErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Quote Form */}
           <div className="bg-gray-800/60 backdrop-blur-sm border border-gray-700/50 rounded-xl p-8">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -192,9 +225,18 @@ export default function SubmitQuotePage() {
                       value={formData.fullName}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.fullName)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="Jane Doe"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.fullName) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.fullName)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Company *</label>
@@ -204,9 +246,18 @@ export default function SubmitQuotePage() {
                       value={formData.company}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.company)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="Acme Machining"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.company) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.company)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Email *</label>
@@ -216,9 +267,18 @@ export default function SubmitQuotePage() {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.email)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="jane@acme.com"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.email) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.email)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Phone</label>
@@ -227,9 +287,18 @@ export default function SubmitQuotePage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.phone)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="(555) 123-4567"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.phone) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.phone)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -248,9 +317,18 @@ export default function SubmitQuotePage() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.length)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="60.5"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.length) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.length)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Width (inches) *</label>
@@ -262,9 +340,18 @@ export default function SubmitQuotePage() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.width)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="14.5"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.width) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.width)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Height (inches) *</label>
@@ -276,9 +363,18 @@ export default function SubmitQuotePage() {
                       required
                       step="0.01"
                       min="0"
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.height)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="6"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.height) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.height)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -294,7 +390,11 @@ export default function SubmitQuotePage() {
                       value={formData.material}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.material)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                     >
                       <option value="">Select material</option>
                       <option value="6061-t6">6061-T6 Aluminum</option>
@@ -304,6 +404,11 @@ export default function SubmitQuotePage() {
                       <option value="p20-tool-steel">P20 Tool Steel</option>
                       <option value="other">Other (specify in notes)</option>
                     </select>
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.material) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.material)}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">Quantity *</label>
@@ -314,9 +419,18 @@ export default function SubmitQuotePage() {
                       onChange={handleInputChange}
                       required
                       min="1"
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.qty)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="1"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.qty) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.qty)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -334,9 +448,18 @@ export default function SubmitQuotePage() {
                       name="materialSpec"
                       value={formData.materialSpec}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors ${
+                        getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec)
+                          ? 'border-red-500 focus:border-red-400'
+                          : 'border-gray-600 focus:border-blue-500'
+                      }`}
                       placeholder="e.g., AMS 4027 Rev G, T6"
                     />
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec) && (
+                      <p className="mt-1 text-sm text-red-400">
+                        {getFieldErrorMessage(validationErrors?.fieldErrors?.materialSpec)}
+                      </p>
+                    )}
                     <p className="text-xs text-gray-400 mt-1">
                       Include revision/temper and any specific certification requirements
                     </p>
@@ -363,9 +486,18 @@ export default function SubmitQuotePage() {
                   value={formData.additionalNotes}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                  className={`w-full px-4 py-3 bg-gray-700 border rounded-lg focus:outline-none transition-colors resize-none ${
+                    getFieldErrorMessage(validationErrors?.fieldErrors?.additionalNotes)
+                      ? 'border-red-500 focus:border-red-400'
+                      : 'border-gray-600 focus:border-blue-500'
+                  }`}
                   placeholder="Any additional requirements, special instructions, or questions..."
                 />
+                {getFieldErrorMessage(validationErrors?.fieldErrors?.additionalNotes) && (
+                  <p className="mt-1 text-sm text-red-400">
+                    {getFieldErrorMessage(validationErrors?.fieldErrors?.additionalNotes)}
+                  </p>
+                )}
               </div>
 
               {/* Submit Buttons */}
@@ -388,7 +520,7 @@ export default function SubmitQuotePage() {
 
               <p className="text-xs text-gray-400 text-center">
                 By submitting this quote request, you agree to our terms of service. 
-                We'll respond within 24 hours with pricing and lead times.
+                We&apos;ll respond within 24 hours with pricing and lead times.
               </p>
             </form>
           </div>
