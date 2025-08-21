@@ -176,17 +176,8 @@ export default function Header() {
                 ) : (
                   // User is not authenticated
                   <>
-                    <input
-                      type="email"
-                      placeholder="your@email.com"
-                      className="hidden sm:block px-3 py-1 bg-gray-800 border border-gray-700 rounded text-sm focus:outline-none focus:border-blue-500"
-                    />
-                    <Link 
-                      href="/signup" 
-                      className="hidden sm:inline-block text-gray-300 hover:text-white transition-colors"
-                    >
-                      Join
-                    </Link>
+
+
                     <Link 
                       href="/auth" 
                       className="text-gray-300 hover:text-white transition-colors"
@@ -311,13 +302,7 @@ export default function Header() {
                     ) : (
                       // User is not authenticated in mobile menu
                       <>
-                        <Link 
-                          href="/signup" 
-                          className="block px-3 py-2 text-gray-300 hover:text-white transition-colors"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Join
-                        </Link>
+
                         <Link 
                           href="/auth" 
                           className="block px-3 py-2 text-gray-300 hover:text-white transition-colors"
