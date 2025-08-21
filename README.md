@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NoxMetals - Full-Stack Remake
 
-## Getting Started
+A full-stack remake of the NoxMetals application, replicating all core features, fixing features that are not working in the original Loveable-built site and adding extra enhancements. Built with the same tech stack as the original.
 
-First, run the development server:
+## ✨ Enhanced Features
+
+This remake includes several features that the original doesn't have or weren't accessible:
+
+- **🔐 Social Authentication**: Login with OAuth providers (Google, GitHub, etc.)
+- **📧 Automated Email Notifications**: Emails sent on quote rejection or acceptance with custom templates
+- **👨‍💼 Admin Dashboard**: Complete admin panel for managing users, quotes, and system operations
+
+## 🤖 AI-Generated Prototype
+
+**Important Notice**: The major portion of this code is written by AI to build a prototype fast for rapid shipping. This is **NOT production-ready code**. A lot of code can be written better for:
+
+- Code maintainability
+- Proper architecture
+- Scalability
+- Performance optimization
+- User experience improvements
+
+This project serves as a proof-of-concept and rapid prototype to validate features and functionality.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js, React
+- **Backend**: Supabase
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+
+## 🚀 Quick Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local  # Configure Supabase credentials
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📁 Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+├── app/                 # Next.js App Router
+├── components/          # Reusable UI components
+├── utils/              # Utility functions and schemas
+├── emails/             # Email templates
+└── public/             # Static assets
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ⚠️ Development Status
 
-## Learn More
+This is a prototype designed for:
+- ✅ Fast feature validation
+- ✅ Quick proof-of-concept
+- ✅ Demonstrating core functionality
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is for prototype and demonstration purposes.
